@@ -1,0 +1,239 @@
+<div class="feed-layout">
+  <div class="feed-container">
+
+    <!-- Encabezado de la página -->
+    <header class="feed-header">
+      <span class="header-breadcrumb">COMUNIDAD / PUBLICACIONES</span>
+      <h1 class="header-title">Ideas que conectan.</h1>
+      <p class="header-subtitle">
+        Apuntes, preguntas y hallazgos. Lo que sabés puede ayudar a alguien más.
+      </p>
+    </header>
+
+    <!-- Layout en dos columnas: Columna principal de posts y Barra lateral -->
+    <div class="feed-grid">
+
+      <!-- Columna Principal -->
+      <section class="feed-main-col">
+
+        <!-- Tarjeta de Creación de Publicación -->
+        <div class="create-post-card">
+          <div class="create-card-header">
+            <img
+              [src]="usuarioActual()?.imagen || 'assets/logo.png'"
+              alt="Avatar"
+              class="create-avatar"
+            />
+            <div class="create-header-text">
+              <h2 class="create-title">¿Qué estás aprendiendo?</h2>
+              <p class="create-subtitle">Compartí una idea con la comunidad.</p>
+            </div>
+          </div>
+
+          <form [formGroup]="publicacionForm" (ngSubmit)="onSubmit()" class="create-form">
+            <!-- Campo Título -->
+            <div class="form-group">
+              <label for="tituloPost" class="form-label">Título</label>
+              <input
+                id="tituloPost"
+                type="text"
+                formControlName="titulo"
+                placeholder="Dale un título a tu publicación"
+                class="form-input"
+              />
+            </div>
+
+            <!-- Campo Contenido / Apunte -->
+            <div class="form-group">
+              <label for="descripcionPost" class="form-label">Contenido / apunte</label>
+              <textarea
+                id="descripcionPost"
+                formControlName="descripcion"
+                rows="3"
+                appAutoResize
+                placeholder="Un apunte, una consulta o algo que te sirvió en la cursada..."
+                class="form-textarea"
+              ></textarea>
+            </div>
+
+            <!-- Barra inferior con selector de imagen y botón publicar -->
+            <div class="create-actions">
+              <div class="attachment-box">
+                <input
+                  type="file"
+                  #fileInput
+                  (change)="onFileSelected($event)"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                />
+
+                @if (nombreArchivo()) {
+                  <div class="file-badge">
+                    <span class="file-name">{{ nombreArchivo() }}</span>
+                    <button type="button" class="btn-remove-file" (click)="quitarArchivo()">✕</button>
+                  </div>
+                } @else {
+                  <button type="button" class="btn-attach" (click)="fileInput.click()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="attach-icon">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Adjuntar imagen</span>
+                  </button>
+                }
+              </div>
+
+              <button
+                type="submit"
+                class="btn-publish"
+                [disabled]="creandoPost() || publicacionForm.invalid"
+              >
+                @if (creandoPost()) {
+                  <span>Publicando...</span>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="publish-icon">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  <span>Publicar</span>
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Barra de Filtros y Ordenamiento -->
+        <div class="feed-filter-bar">
+          <div class="filter-left">
+            <h3 class="filter-title">Lo último de la comunidad</h3>
+            <div class="filter-pills">
+              <button
+                type="button"
+                class="btn-pill"
+                [class.active]="ordenActivo() === 'fecha'"
+                (click)="cambiarOrden('fecha')"
+              >
+                <span class="pill-check">✔</span>
+                <span>Más recientes (Fecha)</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-pill"
+                [class.active]="ordenActivo() === 'meGustas'"
+                (click)="cambiarOrden('meGustas')"
+              >
+                <span>Más populares (Cantidad de Me Gusta)</span>
+              </button>
+            </div>
+          </div>
+
+          <span class="total-notes-badge">{{ totalRegistrado() }} apuntes</span>
+        </div>
+
+        <!-- Listado de Publicaciones -->
+        @if (loadingInicial()) {
+          <div class="loading-state">
+            <app-spinner mensaje="Cargando apuntes de la comunidad..."></app-spinner>
+          </div>
+        } @else {
+          <div class="posts-list">
+            @for (post of publicaciones(); track post._id) {
+              <app-publicacion-card
+                [publicacion]="post"
+                (onLikeToggle)="onToggleLike($event)"
+                (onEliminar)="onEliminarPublicacion($event)"
+              ></app-publicacion-card>
+            } @empty {
+              <div class="empty-feed">
+                <p>No hay publicaciones todavía. ¡Sé el primero en compartir un apunte!</p>
+              </div>
+            }
+          </div>
+
+          <!-- Paginador / Cargar Más -->
+          @if (hayMasPublicaciones() && publicaciones().length > 0) {
+            <div class="pagination-container">
+              <button
+                type="button"
+                class="btn-load-more"
+                [disabled]="loadingMas()"
+                (click)="cargarPublicaciones(false)"
+              >
+                @if (loadingMas()) {
+                  <span>Cargando...</span>
+                } @else {
+                  <span>⌄ Cargar más publicaciones</span>
+                }
+              </button>
+              <span class="pagination-legend">
+                Mostrando {{ publicaciones().length }} publicaciones
+              </span>
+            </div>
+          }
+        }
+
+      </section>
+
+      <!-- Columna Lateral Derecha (Sidebar) -->
+      <aside class="feed-sidebar">
+        <!-- Card 1: Métricas de comunidad -->
+        <div class="sidebar-card">
+          <span class="community-brackets">&#123;&#125;</span>
+          <h3 class="sidebar-title">El conocimiento crece cuando circula.</h3>
+          <p class="sidebar-desc">
+            Este es un espacio para compartir lo que aprendés y destrabar lo que todavía no sale.
+          </p>
+
+          <div class="community-stats-grid">
+            <div class="stat-box">
+              <span class="stat-number">12</span>
+              <span class="stat-label">publicaciones</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number">24</span>
+              <span class="stat-label">comentarios</span>
+            </div>
+          </div>
+          <span class="sidebar-time-badge">ACTIVIDAD · ÚLTIMOS 7 DÍAS</span>
+        </div>
+
+        <!-- Card 2: Temas en tendencia -->
+        <div class="sidebar-card">
+          <h4 class="card-subtitle">En la conversación</h4>
+          <ul class="trending-list">
+            <li class="trending-item">
+              <span class="hash-symbol">#</span>
+              <span>Algoritmos y estructuras</span>
+            </li>
+            <li class="trending-item">
+              <span class="hash-symbol">#</span>
+              <span>Bases de datos</span>
+            </li>
+            <li class="trending-item">
+              <span class="hash-symbol">#</span>
+              <span>Desarrollo de software</span>
+            </li>
+            <li class="trending-item">
+              <span class="hash-symbol">#</span>
+              <span>Matemática discreta</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Normas de la comunidad -->
+        <div class="sidebar-card">
+          <div class="rules-header">
+            <span class="rules-heart">♡</span>
+            <h4 class="card-subtitle">Primero, el respeto.</h4>
+          </div>
+          <p class="sidebar-desc">
+            Citá tus fuentes, cuidá los datos personales y aportá contexto cuando hagas una pregunta.
+          </p>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</div>

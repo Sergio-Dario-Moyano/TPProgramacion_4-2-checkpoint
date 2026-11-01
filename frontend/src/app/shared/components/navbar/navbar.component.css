@@ -1,0 +1,326 @@
+/* ========================================================
+   ESTILOS CSS3 PURO - NAVBAR & DRAWER RESPONSIVE UTN-BUGS
+   ======================================================== */
+
+.navbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: rgba(11, 13, 16, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.navbar-container {
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+
+/* Marca y logotipo */
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+}
+
+.brand-logo-box {
+  width: 36px;
+  height: 36px;
+  background-color: rgba(255, 13, 70, 0.12);
+  border: 1px solid rgba(255, 13, 70, 0.25);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-bug-icon {
+  width: 20px;
+  height: 20px;
+  stroke: var(--color-primary);
+}
+
+.brand-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+/* Navegación Desktop */
+.nav-desktop {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .nav-desktop {
+    display: none;
+  }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: var(--text-main);
+}
+
+.nav-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.avatar-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Badge de rol Admin */
+.badge-admin {
+  background-color: rgba(255, 13, 70, 0.15);
+  color: var(--color-primary);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Botón de logout en desktop */
+.btn-logout-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.btn-logout-nav:hover {
+  color: var(--color-primary);
+}
+
+.logout-icon {
+  width: 17px;
+  height: 17px;
+}
+
+/* Botón hamburguesa mobile */
+.btn-burger {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0.25rem;
+}
+
+@media (max-width: 860px) {
+  .btn-burger {
+    display: flex;
+  }
+}
+
+.burger-bar {
+  width: 22px;
+  height: 2px;
+  background-color: var(--text-main);
+  border-radius: 2px;
+}
+
+/* Drawer Backdrop y Panel Mobile */
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer-panel {
+  width: 100%;
+  max-width: 320px;
+  height: 100%;
+  background-color: #0f1218;
+  border-left: 1px solid var(--border-subtle);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  animation: deslizarDrawer 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-close-drawer {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.btn-close-drawer:hover {
+  color: var(--text-main);
+}
+
+/* Ficha de perfil dentro del Drawer */
+.drawer-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.avatar-drawer {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  margin-bottom: 0.75rem;
+  object-fit: cover;
+  border: 1px solid var(--border-card);
+}
+
+.profile-name {
+  font-size: 1.05rem;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.profile-handle {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.badge-role {
+  margin-top: 0.6rem;
+  background-color: rgba(255, 13, 70, 0.15);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+
+/* Enlaces dentro del Drawer */
+.drawer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.drawer-link-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.drawer-link-item:hover,
+.drawer-link-item.active {
+  background-color: rgba(255, 13, 70, 0.1);
+  color: var(--text-main);
+}
+
+.link-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.drawer-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.arrow-indicator {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+/* Pie de logout en el Drawer */
+.drawer-bottom {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-drawer-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.drawer-logout-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.drawer-legal-label,
+.drawer-sublegal-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Animación de entrada lateral para el Drawer */
+@keyframes deslizarDrawer {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}

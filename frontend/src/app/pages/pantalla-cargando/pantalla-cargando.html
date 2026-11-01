@@ -1,0 +1,51 @@
+<div class="verify-session-wrapper">
+  <!-- Tarjeta central de validación -->
+  <div class="verify-session-card">
+
+    <!-- Animación del radar HUD con arcos concéntricos y el bug central -->
+    <div class="radar-container" aria-hidden="true">
+      <div class="radar-viewport">
+        <!-- Aro exterior oscuro -->
+        <div class="radar-ring-bg"></div>
+
+        <!-- Arco superior derecho rojo neón -->
+        <div class="radar-arc arc-red"></div>
+
+        <!-- Arco lateral izquierdo cyan neón -->
+        <div class="radar-arc arc-cyan"></div>
+
+        <!-- Punto luminoso pulsante del radar -->
+        <div class="radar-ping-dot"></div>
+
+        <!-- Líneas reticulares ortogonales del HUD -->
+        <div class="radar-crosshair crosshair-vertical"></div>
+        <div class="radar-crosshair crosshair-horizontal"></div>
+
+        <!-- Isotipo SVG central del bug en rojo neón -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="radar-bug-svg">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="2" x2="12" y2="7"></line>
+          <line x1="12" y1="17" x2="12" y2="22"></line>
+          <line x1="2" y1="12" x2="7" y2="12"></line>
+          <line x1="17" y1="12" x2="22" y2="12"></line>
+          <line x1="5" y1="5" x2="8.5" y2="8.5"></line>
+          <line x1="19" y1="5" x2="15.5" y2="8.5"></line>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Título principal de la verificación -->
+    <h1 class="verify-title">Verificando sesión...</h1>
+
+    <!-- Subtítulo explicativo -->
+    <p class="verify-description">Un momento, estamos preparando tu espacio.</p>
+
+    <!-- Tag inferior monoespaciado en cyan -->
+    <div class="verify-badge">
+      <span class="badge-prefix">AUTH</span>
+      <span class="badge-separator">/</span>
+      <span class="badge-action">VALIDANDO CREDENCIALES</span>
+    </div>
+
+  </div>
+</div>

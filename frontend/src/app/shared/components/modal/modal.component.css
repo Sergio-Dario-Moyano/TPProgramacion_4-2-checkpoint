@@ -1,0 +1,185 @@
+/* ========================================================
+   ESTILOS CSS3 PURO - MODAL SISTEMA UTN-BUGS
+   ======================================================== */
+
+/* Fondo oscuro translúcido con desenfoque de fondo */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(6, 8, 11, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.25rem;
+}
+
+/* Tarjeta central del modal */
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+  animation: modalEntrada 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Botón 'X' de cierre en la esquina superior */
+.btn-close-modal {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.btn-close-modal:hover {
+  color: var(--text-main);
+}
+
+/* Encabezado del modal */
+.modal-header {
+  margin-bottom: 1.25rem;
+}
+
+/* Caja contenedora del icono */
+.modal-icon-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background-color: rgba(255, 13, 70, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+/* Icono SVG interior */
+.modal-icon-badge .svg-icon {
+  width: 24px;
+  height: 24px;
+  stroke: var(--color-primary);
+}
+
+/* Etiqueta superior monoespaciada */
+.modal-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Tipografía de título y descripción */
+.modal-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  margin-top: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.modal-description {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* Previsualización de la tarjeta de publicación a dar de baja */
+.preview-card {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.preview-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+}
+
+.preview-meta {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Pie de acciones con botones alineados a la derecha */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Botones comunes del modal */
+.btn-modal {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-modal:active {
+  transform: scale(0.98);
+}
+
+/* Botón Cancelar */
+.btn-cancel {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+}
+
+.btn-cancel:hover {
+  background-color: var(--border-subtle);
+}
+
+/* Botón Confirmar / Peligro */
+.btn-confirm.btn-danger {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 14px var(--color-primary-glow);
+}
+
+.btn-confirm.btn-danger:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* Animación sutil de entrada de la tarjeta */
+@keyframes modalEntrada {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

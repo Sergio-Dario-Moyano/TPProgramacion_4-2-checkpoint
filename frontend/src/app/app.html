@@ -1,0 +1,10 @@
+@if (authService.isAuthenticated()) {
+  <app-navbar></app-navbar>
+}
+
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Componente modal global accesible desde cualquier página o servicio -->
+<app-modal></app-modal>

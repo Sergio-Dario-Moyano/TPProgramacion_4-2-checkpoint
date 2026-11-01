@@ -1,0 +1,411 @@
+/* ========================================================
+   ESTILOS CSS3 PURO - DASHBOARD DE ESTADÍSTICAS UTN-BUGS
+   ======================================================== */
+
+.stats-layout {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  padding: 2.5rem 1.5rem 5rem 1.5rem;
+}
+
+.stats-container {
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+}
+
+/* Badge superior */
+.admin-top-badge {
+  display: inline-block;
+  background-color: rgba(255, 13, 70, 0.12);
+  border: 1px solid rgba(255, 13, 70, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+/* Encabezado */
+.stats-header {
+  margin-bottom: 2rem;
+}
+
+.breadcrumb-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stats-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.stats-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Pestañas */
+.stats-nav-tabs {
+  display: flex;
+  gap: 0.75rem;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+}
+
+.tab-btn.active {
+  background-color: rgba(255, 13, 70, 0.12);
+  color: var(--color-primary);
+}
+
+.tab-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Selector de Período */
+.period-selector-card {
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.period-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.period-pills-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-period-pill {
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background-color: var(--bg-surface-elevated);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-period-pill:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+.btn-period-pill.active {
+  background-color: rgba(255, 13, 70, 0.15);
+  border-color: rgba(255, 13, 70, 0.4);
+  color: var(--color-primary);
+}
+
+.period-date-legend {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Grilla de KPIs */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card {
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-icon-wrap {
+  margin-bottom: 1rem;
+}
+
+.kpi-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.cyan-svg {
+  stroke: var(--color-cyan);
+}
+
+.kpi-number {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--color-cyan);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.loading-stats-container {
+  padding: 4rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Grilla de Gráficos de Dos Columnas */
+.charts-grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 992px) {
+  .charts-grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.35rem;
+}
+
+.chart-card-submeta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+}
+
+.chart-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 280px;
+}
+
+.chart-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+}
+
+.footer-legend-axis {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Timeline highlight */
+.timeline-highlight-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.1rem;
+  margin-top: 1.25rem;
+}
+
+.highlight-pin {
+  font-size: 1rem;
+}
+
+.highlight-text-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.highlight-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.highlight-count {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-cyan);
+}
+
+/* Gráfico de Dona */
+.doughnut-card-section {
+  margin-bottom: 2rem;
+}
+
+.doughnut-content-row {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 3rem;
+  align-items: center;
+  padding: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .doughnut-content-row {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.doughnut-canvas-box {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto;
+}
+
+.doughnut-center-info {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.center-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.center-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Leyenda de la dona */
+.doughnut-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.legend-row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.legend-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-post-title {
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.legend-item-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.legend-count {
+  color: var(--text-main);
+}
+
+.legend-pct {
+  color: var(--text-muted);
+}
+
+.doughnut-footer-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 1rem;
+}
+
+/* Disclaimer inferior */
+.stats-bottom-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-top: 1rem;
+}
+
+.info-circle-symbol {
+  font-size: 0.85rem;
+}

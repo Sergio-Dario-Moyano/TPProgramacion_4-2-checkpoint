@@ -1,0 +1,308 @@
+/* ========================================================
+   ESTILOS CSS3 PURO - PANTALLA MI PERFIL UTN-BUGS
+   ======================================================== */
+
+.profile-layout {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  padding: 2.5rem 1.5rem 5rem 1.5rem;
+}
+
+.profile-container {
+  max-width: var(--max-width-content);
+  margin: 0 auto;
+}
+
+/* Encabezado */
+.profile-page-header {
+  margin-bottom: 2.25rem;
+}
+
+.page-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.page-title {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Tarjeta destacada de cabecera */
+.profile-banner-card {
+  position: relative;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2.25rem;
+  margin-bottom: 2.5rem;
+  overflow: hidden;
+}
+
+/* Detalle sutil rojo superior en la tarjeta */
+.banner-top-accent {
+  position: absolute;
+  top: 0;
+  left: 2.25rem;
+  width: 48px;
+  height: 3px;
+  background-color: var(--color-primary);
+  border-radius: 0 0 2px 2px;
+}
+
+.banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.75rem;
+}
+
+@media (max-width: 680px) {
+  .banner-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.banner-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.banner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.banner-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 680px) {
+  .banner-title-row {
+    justify-content: center;
+  }
+}
+
+.user-display-name {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.role-badge {
+  background-color: rgba(255, 13, 70, 0.15);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 4px;
+}
+
+.user-handle {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--color-cyan);
+  margin-bottom: 0.85rem;
+}
+
+.user-bio {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 720px;
+}
+
+/* Grid de dos columnas */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tarjeta Datos Personales */
+.personal-data-card {
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.title-icon {
+  width: 18px;
+  height: 18px;
+  stroke: var(--color-primary);
+}
+
+.personal-data-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.data-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.data-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.data-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+/* Aviso de Privacidad */
+.privacy-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.lock-icon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.privacy-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Sección Mis Publicaciones */
+.user-posts-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.posts-section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.section-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.posts-counter-badge {
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.section-subheading {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.loading-container {
+  padding: 3rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Lista de posts del usuario */
+.user-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Estado sin publicaciones */
+.empty-posts-card {
+  background-color: var(--bg-surface-card);
+  border: 1px dashed var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.empty-posts-text {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.link-create-first {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-cyan);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.link-create-first:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}

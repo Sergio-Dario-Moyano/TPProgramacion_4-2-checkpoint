@@ -1,0 +1,73 @@
+@if (isOpen) {
+  <!-- Contenedor backdrop que cubre toda la pantalla y cierra al hacer clic fuera -->
+  <div class="modal-backdrop" (click)="cancelar()">
+
+    <!-- Contenedor principal de la tarjeta modal con stopPropagation para no cerrarse al interactuar -->
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <!-- Botón de cruz superior para cerrar -->
+      <button type="button" class="btn-close-modal" (click)="cancelar()" aria-label="Cerrar modal">
+        ✕
+      </button>
+
+      <!-- Encabezado con icono contextual y categoría temática -->
+      <div class="modal-header">
+        <div class="modal-icon-badge" [class.is-danger]="config?.esPeligro !== false">
+          @if (config?.tipoIcono === 'timer') {
+            <!-- Icono SVG de cronómetro para aviso de expiración de sesión -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          } @else {
+            <!-- Icono SVG de tacho de basura para eliminación de publicaciones -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          }
+        </div>
+
+        <!-- Categoría en texto monoespaciado rojo neón -->
+        @if (config?.categoria) {
+          <span class="modal-tag">{{ config?.categoria }}</span>
+        }
+      </div>
+
+      <!-- Cuerpo del modal con título y mensaje -->
+      <div class="modal-body">
+        <h2 class="modal-title">{{ config?.titulo }}</h2>
+        <p class="modal-description">{{ config?.mensaje }}</p>
+
+        <!-- Previsualización contextual (título y datos de publicación) -->
+        @if (config?.infoSecundaria) {
+          <div class="preview-card">
+            <h4 class="preview-title">{{ config?.infoSecundaria?.titulo }}</h4>
+            <span class="preview-meta">{{ config?.infoSecundaria?.subtitulo }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Barra inferior con los botones de acción -->
+      <div class="modal-footer">
+        @if (config?.tipo === 'confirmar') {
+          <button type="button" class="btn-modal btn-cancel" (click)="cancelar()">
+            {{ config?.textoCancelar || 'Cancelar' }}
+          </button>
+        }
+
+        <button
+          type="button"
+          class="btn-modal btn-confirm"
+          [class.btn-danger]="config?.esPeligro !== false"
+          (click)="confirmar()"
+        >
+          {{ config?.textoConfirmar || 'Aceptar' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

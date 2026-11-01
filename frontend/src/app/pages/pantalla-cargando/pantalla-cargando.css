@@ -1,0 +1,194 @@
+/* ========================================================
+   ESTILOS CSS3 PURO - RADAR VERIFICAR SESIÓN UTN-BUGS
+   ======================================================== */
+
+.verify-session-wrapper {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* Tarjeta contenedora central */
+.verify-session-card {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--bg-surface-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 3.5rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Contenedor del radar */
+.radar-container {
+  margin-bottom: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ventana circular de radar */
+.radar-viewport {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Círculo base de fondo */
+.radar-ring-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: #0d1017;
+  border: 2px solid #1c2230;
+}
+
+/* Retícula vertical del radar */
+.crosshair-vertical {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Retícula horizontal del radar */
+.crosshair-horizontal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Arco animado cyan */
+.arc-cyan {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-left-color: var(--color-cyan);
+  border-top-color: var(--color-cyan);
+  box-shadow: inset 0 0 12px var(--color-cyan-glow);
+  animation: escanearCyan 2.8s linear infinite;
+}
+
+/* Arco animado rojo */
+.arc-red {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-right-color: var(--color-primary);
+  border-top-color: var(--color-primary);
+  box-shadow: 0 0 14px var(--color-primary-glow);
+  animation: escanearRojo 3.4s linear infinite reverse;
+}
+
+/* Punto focal del radar */
+.radar-ping-dot {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-cyan);
+  box-shadow: 0 0 10px var(--color-cyan);
+  transform: translateY(-50%);
+  animation: parpadeoDot 1.4s ease-in-out infinite alternate;
+  z-index: 2;
+}
+
+/* Isotipo del bug central */
+.radar-bug-svg {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  stroke: var(--color-primary);
+  filter: drop-shadow(0 0 8px var(--color-primary-glow));
+  z-index: 3;
+}
+
+/* Tipografía del título */
+.verify-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+/* Descripción secundaria */
+.verify-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+/* Badge terminal inferior */
+.verify-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge-prefix {
+  color: var(--color-cyan);
+}
+
+.badge-separator {
+  color: var(--text-muted);
+}
+
+.badge-action {
+  color: var(--color-cyan);
+}
+
+/* Animaciones del radar */
+@keyframes escanearCyan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes escanearRojo {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes parpadeoDot {
+  0% {
+    opacity: 0.3;
+    transform: translateY(-50%) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.15);
+  }
+}

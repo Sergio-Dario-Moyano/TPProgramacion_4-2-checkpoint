@@ -1,0 +1,118 @@
+<div class="profile-layout">
+  <div class="profile-container">
+
+    <!-- Encabezado de la página -->
+    <header class="profile-page-header">
+      <span class="page-breadcrumb">COMUNIDAD / MI PERFIL</span>
+      <h1 class="page-title">Tu lugar en la comunidad.</h1>
+      <p class="page-subtitle">Una mirada a tus datos, tus ideas y lo que venís compartiendo.</p>
+    </header>
+
+    @if (usuarioActual(); as usuario) {
+      <!-- Tarjeta destacada de cabecera con avatar y datos públicos -->
+      <section class="profile-banner-card">
+        <div class="banner-top-accent"></div>
+
+        <div class="banner-content">
+          <img
+            [src]="usuario.imagen || 'assets/logo.png'"
+            alt="Foto de perfil"
+            class="banner-avatar"
+          />
+
+          <div class="banner-info">
+            <div class="banner-title-row">
+              <h2 class="user-display-name">{{ usuario.nombre }} {{ usuario.apellido }}</h2>
+              @if (esAdmin()) {
+                <span class="role-badge">Administrador</span>
+              }
+            </div>
+
+            <span class="user-handle">&#64;{{ usuario.nombreUsuario }}</span>
+
+            <p class="user-bio">
+              {{ usuario.descripcion || 'Estudiante de Sistemas. Me gustan los algoritmos, el café y compartir apuntes que hacen más fácil la cursada.' }}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Layout en dos columnas: Datos personales (izq) y Últimas 3 publicaciones (der) -->
+      <div class="profile-grid">
+
+        <!-- Columna Izquierda: Datos Personales -->
+        <aside class="personal-data-col">
+          <div class="personal-data-card">
+            <div class="card-title-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="title-icon">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <h3 class="personal-data-title">Datos personales</h3>
+            </div>
+
+            <!-- Campo Correo Institucional -->
+            <div class="data-group">
+              <span class="data-label">Correo institucional</span>
+              <span class="data-value">{{ usuario.correo }}</span>
+            </div>
+
+            <!-- Campo Fecha de Nacimiento -->
+            <div class="data-group">
+              <span class="data-label">Fecha de nacimiento</span>
+              <span class="data-value">{{ usuario.fechaNacimiento | formatearFecha: 'corto' }}</span>
+            </div>
+
+            <!-- Aviso de privacidad -->
+            <div class="privacy-notice">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="lock-icon">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span class="privacy-text">Estos datos se muestran sólo en tu perfil personal.</span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Columna Derecha: Mis últimas publicaciones -->
+        <main class="user-posts-col">
+          <div class="posts-section-header">
+            <div class="section-title-wrap">
+              <h3 class="section-heading">Mis últimas publicaciones</h3>
+              <span class="posts-counter-badge">{{ ultimasPublicaciones().length }}</span>
+            </div>
+            <p class="section-subheading">Tus tres publicaciones más recientes, ordenadas por fecha.</p>
+          </div>
+
+          @if (loading()) {
+            <div class="loading-container">
+              <app-spinner mensaje="Cargando tus publicaciones..."></app-spinner>
+            </div>
+          } @else {
+            <div class="user-posts-list">
+              @for (post of ultimasPublicaciones(); track post._id) {
+                <app-publicacion-card
+                  [publicacion]="post"
+                  (onLikeToggle)="onToggleLike($event)"
+                  (onEliminar)="onEliminarPublicacion($event)"
+                ></app-publicacion-card>
+              } @empty {
+                <div class="empty-posts-card">
+                  <p class="empty-posts-text">Todavía no creaste ninguna publicación.</p>
+                  <a routerLink="/publicaciones" class="link-create-first">
+                    <span>Crear mi primer apunte</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              }
+            </div>
+          }
+        </main>
+
+      </div>
+    }
+
+  </div>
+</div>
