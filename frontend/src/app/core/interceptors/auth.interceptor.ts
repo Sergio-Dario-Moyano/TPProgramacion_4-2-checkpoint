@@ -1,67 +1,73 @@
-// Importamos los tipos necesarios para interceptores funcionales y manejo de errores HTTP
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-// Importamos la función de inyección de dependencias de Angular
 import { inject } from '@angular/core';
-// Importamos el enrutador para redireccionar ante sesiones expiradas
 import { Router } from '@angular/router';
-// Importamos el servicio de autenticación para reiniciar el estado del usuario
-import { AuthService } from '../services/auth.service';
-// Importamos el servicio del modal para avisar al usuario sobre la expiración
-import { ModalService } from '../../shared/components/modal/modal.service';
-// Operadores RxJS para interceptar errores y relanzarlos
 import { catchError, throwError } from 'rxjs';
-// Servicio de contador para cancelar los temporizadores activos de sesión
-import { ContadorService } from '../services/contador.service';
-// Token de contexto para omitir la intercepción cuando sea necesario
+import { AuthService } from '../services/auth.service';
+import { ModalService } from '../../shared/components/modal/modal.service';
 import { SKIP_INTERCEPTOR } from './http-context-tokens';
 
-// Bandera global para evitar abrir múltiples modales si fallan varias peticiones simultáneas con 401
-let flagError401 = false;
+/** Evita abrir varios modales si fallan varias peticiones a la vez. */
+let manejando401 = false;
 
 /**
- * Interceptor funcional HTTP global de Angular.
+ * Interceptor de autenticación (Sprint 3).
+ * Qué hace:
+ *  1. Agrega el token guardado en el header Authorization y envía las cookies (withCredentials).
+ *  2. Si una petición devuelve 401, limpia la sesión y redirige al login para rehacer el token.
+ *  3. Si devuelve 403, avisa con un modal que la acción no está permitida.
+ * Las rutas de login, registro y autorizar manejan sus propios errores (por ejemplo,
+ * "contraseña incorrecta" es un 401 que se muestra en el formulario, no una sesión vencida).
  */
-
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const auth = inject(AuthService);
   const modal = inject(ModalService);
-  const contador = inject(ContadorService);
 
-  const reqConCookies = req.clone({ withCredentials: true });
+  const token = auth.token;
+  const peticion = req.clone({
+    withCredentials: true,
+    setHeaders: token ? { Authorization: `Bearer ${token}` } : {}
+  });
 
-  // Rutas de autenticación que deben responder 401 sin disparar el modal de expiración
   const esRutaSilenciosa =
-    req.url.includes('/auth/autorizar') ||
+    req.context.get(SKIP_INTERCEPTOR) ||
     req.url.includes('/auth/login') ||
     req.url.includes('/auth/registro');
 
-  if (req.context.get(SKIP_INTERCEPTOR) || esRutaSilenciosa) {
-    return next(reqConCookies);
+  if (esRutaSilenciosa) {
+    return next(peticion);
   }
 
-  return next(reqConCookies).pipe(
+  return next(peticion).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        if (flagError401) {
-          return throwError(() => error);
-        }
-
-        flagError401 = true;
-        contador.limpiarTimers();
-        localStorage.removeItem('usuarioActual');
-        auth.actualUser.set(null);
+      if (error.status === 401 && !manejando401) {
+        manejando401 = true;
+        auth.limpiarSesion();
 
         router.navigate(['/login']).then(() => {
-          modal.alerta({
-            categoria: 'SESIÓN / EXPIRACIÓN',
-            titulo: 'Sesión expirada',
-            mensaje: 'Tu sesión ha vencido o no es válida. Por favor, ingresá nuevamente.',
-            textoConfirmar: 'Entendido',
-            esPeligro: true
-          }).then(() => {
-            flagError401 = false;
-          });
+          modal
+            .alerta({
+              categoria: 'ERROR 401 / NO AUTORIZADO',
+              titulo: 'Necesitás volver a ingresar',
+              mensaje:
+                error.error?.message ??
+                'Tu sesión venció o no es válida. Iniciá sesión de nuevo para continuar.',
+              textoConfirmar: 'Ir al login',
+              tipoIcono: 'alert',
+              esPeligro: true
+            })
+            .finally(() => (manejando401 = false));
+        });
+      }
+
+      if (error.status === 403) {
+        modal.alerta({
+          categoria: 'ERROR 403 / PERMISOS',
+          titulo: 'Acción no permitida',
+          mensaje: error.error?.message ?? 'No tenés permiso para realizar esta acción.',
+          textoConfirmar: 'Entendido',
+          tipoIcono: 'alert',
+          esPeligro: true
         });
       }
 
@@ -84,48 +90,64 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
 
 
+
+
+
+// // Importamos los tipos necesarios para interceptores funcionales y manejo de errores HTTP
+// import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+// // Importamos la función de inyección de dependencias de Angular
+// import { inject } from '@angular/core';
+// // Importamos el enrutador para redireccionar ante sesiones expiradas
+// import { Router } from '@angular/router';
+// // Importamos el servicio de autenticación para reiniciar el estado del usuario
+// import { AuthService } from '../services/auth.service';
+// // Importamos el servicio del modal para avisar al usuario sobre la expiración
+// import { ModalService } from '../../shared/components/modal/modal.service';
+// // Operadores RxJS para interceptar errores y relanzarlos
+// import { catchError, throwError } from 'rxjs';
+// // Servicio de contador para cancelar los temporizadores activos de sesión
+// import { ContadorService } from '../services/contador.service';
+// // Token de contexto para omitir la intercepción cuando sea necesario
+// import { SKIP_INTERCEPTOR } from './http-context-tokens';
+
+// // Bandera global para evitar abrir múltiples modales si fallan varias peticiones simultáneas con 401
+// let flagError401 = false;
+
+// /**
+//  * Interceptor funcional HTTP global de Angular.
+//  */
+
 // export const authInterceptor: HttpInterceptorFn = (req, next) => {
-//   // Inyectamos las dependencias requeridas dentro del contexto funcional
 //   const router = inject(Router);
 //   const auth = inject(AuthService);
 //   const modal = inject(ModalService);
 //   const contador = inject(ContadorService);
 
-//   // Clonamos la solicitud saliente habilitando el envío y recepción de cookies HttpOnly
 //   const reqConCookies = req.clone({ withCredentials: true });
 
-//   // Verificamos si la solicitud tiene la directiva explícita de saltar este interceptor
-//   if (req.context.get(SKIP_INTERCEPTOR)) {
-//     // Enviamos la petición clonada directamente al siguiente manejador sin atrapar el 401
+//   // Rutas de autenticación que deben responder 401 sin disparar el modal de expiración
+//   const esRutaSilenciosa =
+//     req.url.includes('/auth/autorizar') ||
+//     req.url.includes('/auth/login') ||
+//     req.url.includes('/auth/registro');
+
+//   if (req.context.get(SKIP_INTERCEPTOR) || esRutaSilenciosa) {
 //     return next(reqConCookies);
 //   }
 
-//   // Pasamos la petición clonada y escuchamos el flujo de respuesta mediante tubería (pipe)
 //   return next(reqConCookies).pipe(
-//     // Capturamos cualquier error devuelto por el servidor
 //     catchError((error: HttpErrorResponse) => {
-//       // Comprobamos si el error corresponde a un estado 401 (No autorizado o sesión vencida)
 //       if (error.status === 401) {
-//         // Si ya hay un proceso de 401 ejecutándose, solo relanzamos el error para no duplicar modales
 //         if (flagError401) {
 //           return throwError(() => error);
 //         }
 
-//         // Marcamos la bandera en true para bloquear alertas repetidas
 //         flagError401 = true;
-
-//         // Limpiamos los temporizadores de inactividad de la sesión
 //         contador.limpiarTimers();
-
-//         // Eliminamos los datos del usuario en almacenamiento local
 //         localStorage.removeItem('usuarioActual');
-
-//         // Limpiamos el Signal del usuario autenticado en memoria
 //         auth.actualUser.set(null);
 
-//         // Redirigimos al usuario a la pantalla de login
 //         router.navigate(['/login']).then(() => {
-//           // Una vez redirigido, abrimos el modal estilizado notificando la expiración
 //           modal.alerta({
 //             categoria: 'SESIÓN / EXPIRACIÓN',
 //             titulo: 'Sesión expirada',
@@ -133,14 +155,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 //             textoConfirmar: 'Entendido',
 //             esPeligro: true
 //           }).then(() => {
-//             // Liberamos la bandera cuando el usuario cierra o acepta el modal
 //             flagError401 = false;
 //           });
 //         });
 //       }
 
-//       // Propagamos el error para que el componente que realizó la llamada pueda gestionarlo si requiere
 //       return throwError(() => error);
 //     })
 //   );
 // };
+
+

@@ -1,6 +1,115 @@
-/* ========================================================
-   ESTILOS CSS3 PURO - SPINNER NEÓN UTN-BUGS
-   ======================================================== */
+.spinner-overlay {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.spinner-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.25rem !important;
+}
+
+.spinner-loader {
+  position: relative !important;
+  width: 90px !important;
+  height: 90px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.spinner-svg {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  transform: rotate(-90deg) !important;
+}
+
+.spinner-track {
+  fill: none !important;
+  stroke: rgba(0, 229, 255, 0.1) !important;
+  stroke-width: 4 !important;
+}
+
+.spinner-progress-circle {
+  fill: none !important;
+  stroke: #00e5ff !important;
+  stroke-width: 4 !important;
+  stroke-linecap: round !important;
+  stroke-dasharray: 326.7 !important;
+  stroke-dashoffset: 326.7 !important;
+  filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.7)) !important;
+  animation: girarVerde 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+.spinner-bug-badge {
+  width: 52px !important;
+  height: 52px !important;
+  background-color: #0b0f14 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.4) !important;
+  border: 1.5px solid rgba(0, 229, 255, 0.3);
+  z-index: 2;
+}
+
+.spinner-bug-icon {
+  width: 30px !important;
+  height: 30px !important;
+  stroke: #00e5ff !important;
+}
+
+.spinner-message {
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 1rem !important;
+  color: #f0f3f8 !important;
+  margin: 0 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.05em !important;
+  text-align: center;
+}
+
+@keyframes girarVerde {
+  0% {
+    stroke-dashoffset: 326.7 !important;
+    transform: rotate(0deg);
+    transform-origin: center;
+  }
+  50% {
+    stroke-dashoffset: 80 !important;
+    transform: rotate(180deg);
+    transform-origin: center;
+  }
+  100% {
+    stroke-dashoffset: 326.7 !important;
+    transform: rotate(360deg);
+    transform-origin: center;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
 
 .spinner-container {
   display: flex;
@@ -11,7 +120,6 @@
   gap: 1.25rem;
 }
 
-/* Contenedor relativo de los anillos concéntricos */
 .spinner-loader {
   position: relative;
   width: 48px;
@@ -21,7 +129,6 @@
   justify-content: center;
 }
 
-/* Anillos con bordes luminosos y rotación */
 .spinner-ring {
   position: absolute;
   inset: 0;
@@ -29,7 +136,6 @@
   border: 3px solid transparent;
 }
 
-/* Anillo exterior cyan */
 .spinner-ring.ring-cyan {
   border-top-color: var(--color-cyan);
   border-left-color: var(--color-cyan);
@@ -37,7 +143,6 @@
   animation: girarAnillo 1.2s linear infinite;
 }
 
-/* Anillo interior rojo neón en dirección opuesta */
 .spinner-ring.ring-red {
   inset: 5px;
   border-bottom-color: var(--color-primary);
@@ -46,7 +151,6 @@
   animation: girarAnillo 1.6s linear infinite reverse;
 }
 
-/* Punto focal central */
 .spinner-core {
   width: 6px;
   height: 6px;
@@ -55,7 +159,6 @@
   box-shadow: 0 0 8px #ffffff;
 }
 
-/* Mensaje con tipografía monoespaciada */
 .spinner-message {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -64,7 +167,6 @@
   text-align: center;
 }
 
-/* Animación de rotación 360 grados */
 @keyframes girarAnillo {
   from {
     transform: rotate(0deg);
@@ -72,4 +174,4 @@
   to {
     transform: rotate(360deg);
   }
-}
+} */

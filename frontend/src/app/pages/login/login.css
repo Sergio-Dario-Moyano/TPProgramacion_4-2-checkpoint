@@ -1,5 +1,5 @@
 /* ========================================================
-   ESTILOS CSS3 PURO - PANTALLA LOGIN UTN-BUGS
+   ESTILOS CSS3 PURO - PANTALLA LOGIN CHECKPOINT
    ======================================================== */
 
 .login-wrapper {
@@ -9,7 +9,6 @@
   flex-direction: column;
 }
 
-/* Barra superior minimalista */
 .login-header {
   height: 68px;
   display: flex;
@@ -29,8 +28,8 @@
 .brand-logo-box {
   width: 36px;
   height: 36px;
-  background-color: rgba(255, 13, 70, 0.12);
-  border: 1px solid rgba(255, 13, 70, 0.25);
+  background-color: rgba(162, 89, 255, 0.12);
+  border: 1px solid rgba(162, 89, 255, 0.25);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -63,7 +62,6 @@
   color: var(--color-cyan);
 }
 
-/* Frase lema en cyan neón centrada */
 .terminal-banner {
   text-align: center;
   padding-top: 3.5rem;
@@ -78,7 +76,6 @@
   margin-right: 0.4rem;
 }
 
-/* Contenedor central */
 .login-main {
   flex: 1;
   display: flex;
@@ -87,7 +84,6 @@
   padding: 1rem 1.5rem 3rem 1.5rem;
 }
 
-/* Tarjeta principal de login */
 .login-card {
   width: 100%;
   max-width: 480px;
@@ -113,13 +109,12 @@
   margin-bottom: 1.75rem;
 }
 
-/* Cartel de error / cuenta deshabilitada */
 .alert-box-error {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: rgba(255, 13, 70, 0.1);
-  border: 1px solid rgba(255, 13, 70, 0.35);
+  background-color: var(--color-danger-bg);
+  border: 1px solid rgba(255, 61, 90, 0.35);
   border-radius: var(--radius-sm);
   padding: 0.85rem 1.1rem;
   margin-bottom: 1.5rem;
@@ -128,17 +123,16 @@
 .alert-icon {
   width: 20px;
   height: 20px;
-  stroke: var(--color-primary);
+  stroke: var(--color-danger);
   flex-shrink: 0;
 }
 
 .alert-text {
   font-size: 0.85rem;
-  color: #ff99aa;
+  color: #ffb3be;
   line-height: 1.4;
 }
 
-/* Campos del formulario */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -157,7 +151,6 @@
   margin-bottom: 0.5rem;
 }
 
-/* Contenedor relativo para posicionar iconos a la derecha */
 .input-container {
   position: relative;
   display: flex;
@@ -184,14 +177,13 @@
 }
 
 .form-input.input-invalid {
-  border-color: var(--color-primary);
+  border-color: var(--color-danger);
 }
 
 .password-input {
   letter-spacing: 0.1em;
 }
 
-/* Iconos de entrada */
 .input-icon {
   position: absolute;
   right: 1rem;
@@ -223,7 +215,6 @@
   height: 18px;
 }
 
-/* Mensajes de ayuda y de error */
 .password-hint-text {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -232,11 +223,10 @@
 
 .field-error-msg {
   font-size: 0.75rem;
-  color: var(--color-primary);
+  color: var(--color-danger);
   margin-top: 0.35rem;
 }
 
-/* Botón de submit */
 .btn-submit-login {
   height: 48px;
   background-color: var(--color-primary);
@@ -273,7 +263,6 @@
   height: 18px;
 }
 
-/* Enlace inferior */
 .login-footer {
   margin-top: 2rem;
   text-align: center;
@@ -297,4 +286,259 @@
 
 .footer-link:hover {
   text-decoration: underline;
+}
+
+.btn-spinner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* ========================================================
+   SPINNER CYBERPUNK - PALETA CORPORATIVA (LOGIN)
+   ======================================================== */
+
+/* Pantalla de carga fija que cubre toda la ventana para evitar mostrar elementos de fondo o navbars */
+.login-loading-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: var(--bg-app, #0b0f14) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
+}
+
+.loading-card-state {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  padding: 0 1.5rem !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.cyber-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.75rem;
+}
+
+.cyber-loader {
+  --size: 140px;
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cyber-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.cyber-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 4;
+}
+
+.cyber-progress {
+  fill: none;
+  /* Utiliza la variable corporativa principal de la app */
+  stroke: var(--color-primary);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 326.7;
+  stroke-dashoffset: 326.7;
+  filter: drop-shadow(0 0 10px var(--color-primary-glow, rgba(162, 89, 255, 0.6)));
+  animation: girarAnilloCyber 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.cyber-bug-badge {
+  width: calc(var(--size, 140px) * 0.84);
+  height: calc(var(--size, 140px) * 0.84);
+  background-color: var(--bg-surface-card, #151922);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 28px var(--color-primary-glow, rgba(162, 89, 255, 0.35)), inset 0 0 22px rgba(162, 89, 255, 0.12);
+  border: 1px solid rgba(162, 89, 255, 0.25);
+  z-index: 2;
+}
+
+.cyber-bug-icon {
+  width: 88%;
+  height: 88%;
+  /* Color del logo según la paleta principal */
+  stroke: var(--color-primary);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 5px var(--color-primary-glow, rgba(162, 89, 255, 0.8)));
+}
+
+.cyber-bug-icon .bug-body {
+  fill: rgba(162, 89, 255, 0.1);
+}
+
+.cyber-bug-icon .bug-dot {
+  fill: var(--color-primary);
+  stroke: none;
+}
+
+.cyber-message {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: var(--text-main, #f0f3f8);
+  margin: 0;
+  text-align: center;
+}
+
+/* ========================================================
+   ESTILOS PARA LOS BOTONES DEL HEADER SUPERIOR
+   ======================================================== */
+
+
+.nav-btn-login {
+  color: var(--text-main, #f0f3f8);
+  background-color: transparent;
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+}
+
+.nav-btn-login:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-muted, #8a99ad);
+}
+
+.nav-btn-register {
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 2px 10px var(--color-primary-glow, rgba(162, 89, 255, 0.3));
+}
+
+.nav-btn-register:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.header-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-btn {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-sm, 6px);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--text-main, #f0f3f8);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-muted, #8a99ad);
+}
+
+.nav-btn.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--color-primary-glow, rgba(162, 89, 255, 0.3));
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-field {
+  flex: 1;
+}
+
+.header-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-btn {
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-sm, 6px);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--text-main, #f0f3f8);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-muted, #8a99ad);
+}
+
+.nav-btn.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--color-primary-glow, rgba(162, 89, 255, 0.3));
+}
+
+@media (max-width: 480px) {
+  .login-header { padding: 0 1rem; }
+  .header-nav-actions { gap: 0.5rem; }
+  .nav-btn { padding: 0.45rem 0.8rem; font-size: 0.8rem; }
+}
+
+@keyframes girarAnilloCyber {
+  0%   { stroke-dashoffset: 326.7; transform: rotate(0deg);   transform-origin: center; }
+  50%  { stroke-dashoffset: 80;    transform: rotate(180deg); transform-origin: center; }
+  100% { stroke-dashoffset: 326.7; transform: rotate(360deg); transform-origin: center; }
+}
+.login-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--color-lime);
+  margin-bottom: 0.35rem;
+  animation: parpadeo 1.6s steps(2) infinite;
+}
+
+.brand-link {
+  text-decoration: none;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0.35;
+  }
 }

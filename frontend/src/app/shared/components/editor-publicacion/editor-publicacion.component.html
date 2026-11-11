@@ -1,0 +1,72 @@
+<div class="editor-backdrop" (click)="cerrar.emit()">
+  <div class="editor-card" role="dialog" aria-modal="true" aria-labelledby="editor-titulo" (click)="$event.stopPropagation()">
+    <header class="editor-header">
+      <div>
+        <span class="editor-tag">PUBLICACIÓN / EDITAR</span>
+        <h2 id="editor-titulo" class="editor-title">Editar publicación</h2>
+      </div>
+      <button type="button" class="btn btn-ghost btn-icon" (click)="cerrar.emit()" aria-label="Cerrar">✕</button>
+    </header>
+
+    @if (error()) {
+      <div class="alert-box-error" role="alert"><span class="alert-text">{{ error() }}</span></div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="guardar()" class="editor-form">
+      <div class="form-field">
+        <label for="ed-titulo" class="field-label">Título</label>
+        <input id="ed-titulo" type="text" formControlName="titulo" maxlength="100" class="form-input"
+               [class.input-invalid]="form.controls.titulo.touched && form.controls.titulo.invalid" />
+      </div>
+
+      <div class="form-row-two-cols">
+        <div class="form-field">
+          <label for="ed-categoria" class="field-label">Categoría</label>
+          <select id="ed-categoria" formControlName="categoria" class="form-input">
+            @for (c of categorias; track c.valor) {
+              <option [value]="c.valor">{{ c.etiqueta }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="ed-juego" class="field-label">Juego <span class="opcional">(opcional)</span></label>
+          <input id="ed-juego" type="text" formControlName="juego" maxlength="60" placeholder="Ej: Hollow Knight" class="form-input" />
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="ed-descripcion" class="field-label">Mensaje</label>
+        <textarea id="ed-descripcion" formControlName="descripcion" rows="4" maxlength="500" appAutoResize
+                  class="form-textarea"
+                  [class.input-invalid]="form.controls.descripcion.touched && form.controls.descripcion.invalid"></textarea>
+        <div class="textarea-footer">
+          <span></span>
+          <span class="char-count">{{ form.controls.descripcion.value.length }} / 500</span>
+        </div>
+      </div>
+
+      <div class="form-field zona-imagen" appSoltarArchivo (archivoSoltado)="cargarImagen($event)">
+        <span class="field-label">Imagen <span class="opcional">(opcional · podés arrastrarla acá)</span></span>
+        <input type="file" #archivo hidden accept="image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" />
+        @if (previewImagen()) {
+          <div class="imagen-preview">
+            <img [src]="previewImagen()!" alt="Imagen de la publicación" />
+            <div class="imagen-acciones">
+              <button type="button" class="btn btn-ghost btn-sm" (click)="archivo.click()">Cambiar</button>
+              <button type="button" class="btn btn-danger btn-sm" (click)="eliminarImagen()">Quitar</button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="btn btn-ghost" (click)="archivo.click()">+ Agregar imagen</button>
+        }
+      </div>
+
+      <footer class="editor-footer">
+        <button type="button" class="btn btn-ghost" (click)="cerrar.emit()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+          {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+</div>

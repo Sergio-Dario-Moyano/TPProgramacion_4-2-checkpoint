@@ -1,0 +1,137 @@
+<div class="page-layout">
+  <div class="page-container">
+
+    <header class="page-header dash-header">
+      <div>
+        <span class="page-breadcrumb">DASHBOARD / USUARIOS</span>
+        <h1 class="page-title">Gestión de jugadores</h1>
+        <p class="page-subtitle">Creá cuentas, cambiá el rol de cualquier usuario y habilitá o deshabilitá cuentas.</p>
+      </div>
+      <nav class="dash-tabs">
+        <a routerLink="/dashboard/usuarios" routerLinkActive="active" class="dash-tab">Usuarios</a>
+        <a routerLink="/dashboard/estadisticas" routerLinkActive="active" class="dash-tab">Estadísticas</a>
+      </nav>
+    </header>
+
+    <!-- Resumen -->
+    <section class="stats-row">
+      <div class="stat-tile"><span class="stat-value">{{ totales().total }}</span><span class="stat-label">en la lista</span></div>
+      <div class="stat-tile"><span class="stat-value ok">{{ totales().activos }}</span><span class="stat-label">habilitados</span></div>
+      <div class="stat-tile"><span class="stat-value off">{{ totales().total - totales().activos }}</span><span class="stat-label">deshabilitados</span></div>
+      <div class="stat-tile"><span class="stat-value admin">{{ totales().admins }}</span><span class="stat-label">administradores</span></div>
+    </section>
+
+    <!-- Alta de usuario -->
+    <section class="panel alta-panel">
+      <div class="alta-header">
+        <div>
+          <h2 class="panel-title">Nuevo usuario</h2>
+          <p class="panel-sub">Mismos datos que el registro. Elegí si es usuario o administrador.</p>
+        </div>
+        <button type="button" class="btn" [class.btn-primary]="!mostrarFormulario()" [class.btn-ghost]="mostrarFormulario()"
+                (click)="mostrarFormulario.set(!mostrarFormulario())">
+          {{ mostrarFormulario() ? 'Cerrar formulario' : '+ Crear usuario' }}
+        </button>
+      </div>
+
+      @if (mostrarFormulario()) {
+        <div class="alta-form">
+          @if (errorAlta()) {
+            <div class="alert-box-error" role="alert"><span class="alert-text">{{ errorAlta() }}</span></div>
+          }
+          <app-formulario-usuario
+            textoBoton="Crear usuario"
+            textoCargando="Creando usuario..."
+            [cargando]="creando()"
+            (enviar)="crearUsuario($event)"
+          />
+        </div>
+      }
+    </section>
+
+    <!-- Listado -->
+    <section class="panel">
+      <div class="list-toolbar">
+        <h2 class="panel-title">Usuarios</h2>
+        <div class="toolbar-controls">
+          <input type="search" [formControl]="busqueda" placeholder="Buscar por nombre, correo o usuario..."
+                 class="form-input search-input" aria-label="Buscar usuarios" />
+          <div class="segmented" role="group" aria-label="Filtrar por estado">
+            <button type="button" [class.active]="estado() === 'todos'" (click)="cambiarEstado('todos')">Todos</button>
+            <button type="button" [class.active]="estado() === 'activos'" (click)="cambiarEstado('activos')">Activos</button>
+            <button type="button" [class.active]="estado() === 'inactivos'" (click)="cambiarEstado('inactivos')">Inactivos</button>
+          </div>
+        </div>
+      </div>
+
+      @if (cargando()) {
+        <div class="loading-box"><app-spinner mensaje="Cargando usuarios..."></app-spinner></div>
+      } @else {
+        <div class="table-wrap">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Correo</th>
+                <th>Edad</th>
+                <th>Perfil</th>
+                <th>Alta</th>
+                <th>Estado</th>
+                <th class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of usuarios(); track u._id) {
+                <tr [class.row-off]="!u.activo">
+                  <td>
+                    <div class="user-cell">
+                      <img [src]="u.imagen" appImagenFallback alt="" class="user-avatar" />
+                      <div>
+                        <div class="user-name">{{ u.nombre }} {{ u.apellido }}</div>
+                        <div class="user-handle">&#64;{{ u.nombreUsuario }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="muted">{{ u.correo }}</td>
+                  <td class="muted">{{ u.fechaNacimiento | edad }}</td>
+                  <td>
+                    <span class="chip" [class.chip-lime]="u.perfil === 'administrador'" [class.chip-cyan]="u.perfil === 'usuario'">{{ u.perfil }}</span>
+                  </td>
+                  <td class="muted" [title]="u.createdAt | date: 'dd/MM/yyyy HH:mm'">{{ u.createdAt | tiempoRelativo }}</td>
+                  <td>
+                    <span class="chip" [class.chip-success]="u.activo" [class.chip-danger]="!u.activo">
+                      {{ u.activo ? 'Habilitado' : 'Deshabilitado' }}
+                    </span>
+                  </td>
+                  <td class="col-acciones">
+                    @if (u._id === idActual()) {
+                      <span class="chip chip-muted">Vos</span>
+                    } @else {
+                      <div class="acciones">
+                        <button type="button" class="btn btn-ghost btn-sm" [disabled]="procesandoId() === u._id || !u.activo" (click)="cambiarRol(u)"
+                                [title]="!u.activo ? 'Habilitá la cuenta para poder cambiarle el rol' : u.perfil === 'administrador' ? 'Pasar a usuario común' : 'Darle rol de administrador'">
+                          {{ u.perfil === 'administrador' ? 'Quitar admin' : 'Hacer admin' }}
+                        </button>
+                        @if (u.activo) {
+                          <button type="button" class="btn btn-danger btn-sm" [disabled]="procesandoId() === u._id" (click)="deshabilitar(u)">
+                            Deshabilitar
+                          </button>
+                        } @else {
+                          <button type="button" class="btn btn-success btn-sm" [disabled]="procesandoId() === u._id" (click)="habilitar(u)">
+                            Habilitar
+                          </button>
+                        }
+                      </div>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="empty-row">No hay usuarios que coincidan con la búsqueda.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
+</div>

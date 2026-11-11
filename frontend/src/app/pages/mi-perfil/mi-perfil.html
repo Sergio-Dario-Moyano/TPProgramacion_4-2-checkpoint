@@ -1,89 +1,226 @@
 <div class="profile-layout">
   <div class="profile-container">
 
-    <!-- Encabezado de la página -->
     <header class="profile-page-header">
       <span class="page-breadcrumb">COMUNIDAD / MI PERFIL</span>
-      <h1 class="page-title">Tu lugar en la comunidad.</h1>
-      <p class="page-subtitle">Una mirada a tus datos, tus ideas y lo que venís compartiendo.</p>
+      <h1 class="page-title">Tu ficha de jugador.</h1>
+      <p class="page-subtitle">Tus datos, tu avatar y lo último que compartiste con la comunidad.</p>
     </header>
 
     @if (usuarioActual(); as usuario) {
-      <!-- Tarjeta destacada de cabecera con avatar y datos públicos -->
+      <!-- Banner -->
       <section class="profile-banner-card">
         <div class="banner-top-accent"></div>
-
         <div class="banner-content">
-          <img
-            [src]="usuario.imagen || 'assets/logo.png'"
-            alt="Foto de perfil"
-            class="banner-avatar"
-          />
+          <img [src]="usuario.imagen" appImagenFallback alt="Foto de perfil" class="banner-avatar" />
 
           <div class="banner-info">
             <div class="banner-title-row">
               <h2 class="user-display-name">{{ usuario.nombre }} {{ usuario.apellido }}</h2>
-              @if (esAdmin()) {
-                <span class="role-badge">Administrador</span>
-              }
+              <span class="chip" [class.chip-lime]="usuario.perfil === 'administrador'" [class.chip-cyan]="usuario.perfil === 'usuario'">
+                {{ usuario.perfil }}
+              </span>
             </div>
-
             <span class="user-handle">&#64;{{ usuario.nombreUsuario }}</span>
-
-            <p class="user-bio">
-              {{ usuario.descripcion || 'Estudiante de Sistemas. Me gustan los algoritmos, el café y compartir apuntes que hacen más fácil la cursada.' }}
-            </p>
+            <p class="user-bio">{{ usuario.descripcion || 'Todavía no escribiste una descripción. ¡Contale a la comunidad a qué jugás!' }}</p>
           </div>
+
+          @if (modo() === 'ver') {
+            <div class="banner-actions">
+              <button type="button" class="btn btn-primary" (click)="abrirEdicion()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"></path>
+                </svg>
+                Editar perfil
+              </button>
+              <button type="button" class="btn btn-ghost" (click)="abrirCambioPassword()">Cambiar contraseña</button>
+            </div>
+          }
         </div>
       </section>
 
-      <!-- Layout en dos columnas: Datos personales (izq) y Últimas 3 publicaciones (der) -->
-      <div class="profile-grid">
+      <!-- ===================== EDITAR PERFIL ===================== -->
+      @if (modo() === 'editar') {
+        <section class="panel edit-panel">
+          <div class="edit-header">
+            <div>
+              <span class="page-breadcrumb">PERFIL / EDITAR</span>
+              <h3 class="edit-title">Editar datos</h3>
+            </div>
+          </div>
 
-        <!-- Columna Izquierda: Datos Personales -->
+          @if (errorFormulario()) {
+            <div class="alert-box-error" role="alert"><span class="alert-text">{{ errorFormulario() }}</span></div>
+          }
+
+          <form [formGroup]="perfilForm" (ngSubmit)="guardarPerfil()" class="register-form" novalidate>
+            <!-- Foto -->
+            <div class="foto-editor" appSoltarArchivo (archivoSoltado)="cargarFoto($event)">
+              <img [src]="previewFoto() || ''" appImagenFallback alt="Foto de perfil" class="foto-preview" />
+              <div class="foto-acciones">
+                <input type="file" #foto hidden accept="image/jpeg,image/png,image/webp" (change)="onFotoSeleccionada($event)" />
+                <button type="button" class="btn btn-ghost btn-sm" (click)="foto.click()">Cambiar foto</button>
+                @if (previewFoto()) {
+                  <button type="button" class="btn btn-danger btn-sm" (click)="eliminarFoto()">Quitar foto</button>
+                }
+                <span class="field-hint-text">JPG, PNG o WEBP · hasta 5 MB · también podés arrastrar la foto acá</span>
+              </div>
+            </div>
+
+            <div class="form-row-two-cols">
+              <div class="form-field">
+                <label for="pf-nombre" class="field-label">Nombre</label>
+                <input id="pf-nombre" type="text" formControlName="nombre" class="form-input" [class.input-invalid]="invalido(perfilForm, 'nombre')" />
+                @if (invalido(perfilForm, 'nombre')) { <small class="field-error-msg">Solo letras, entre 2 y 50 caracteres.</small> }
+              </div>
+              <div class="form-field">
+                <label for="pf-apellido" class="field-label">Apellido</label>
+                <input id="pf-apellido" type="text" formControlName="apellido" class="form-input" [class.input-invalid]="invalido(perfilForm, 'apellido')" />
+                @if (invalido(perfilForm, 'apellido')) { <small class="field-error-msg">Solo letras, entre 2 y 50 caracteres.</small> }
+              </div>
+            </div>
+
+            <div class="form-row-two-cols">
+              <div class="form-field">
+                <label for="pf-usuario" class="field-label">Nombre de usuario</label>
+                <input id="pf-usuario" type="text" formControlName="nombreUsuario" class="form-input" [class.input-invalid]="invalido(perfilForm, 'nombreUsuario')" />
+                @if (invalido(perfilForm, 'nombreUsuario')) { <small class="field-error-msg">3 a 15 caracteres: letras, números o guion bajo.</small> }
+              </div>
+              <div class="form-field">
+                <label for="pf-correo" class="field-label">Correo</label>
+                <input id="pf-correo" type="email" formControlName="correo" class="form-input" [class.input-invalid]="invalido(perfilForm, 'correo')" />
+                @if (invalido(perfilForm, 'correo')) { <small class="field-error-msg">Ingresá un correo válido.</small> }
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="pf-fecha" class="field-label">Fecha de nacimiento</label>
+              <input id="pf-fecha" type="date" formControlName="fechaNacimiento" class="form-input" [class.input-invalid]="invalido(perfilForm, 'fechaNacimiento')" />
+              @if (invalido(perfilForm, 'fechaNacimiento')) { <small class="field-error-msg">Fecha inválida (entre 13 y 100 años).</small> }
+            </div>
+
+            <div class="form-field">
+              <label for="pf-descripcion" class="field-label">Descripción breve</label>
+              <textarea id="pf-descripcion" formControlName="descripcion" rows="3" maxlength="250" appAutoResize class="form-textarea"></textarea>
+              <div class="textarea-footer">
+                <span class="hint-profile">Se muestra en tu perfil y en tus publicaciones.</span>
+                <span class="char-count">{{ perfilForm.controls.descripcion.value.length }} / 250</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" (click)="cancelar()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+                {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <!-- ===================== CAMBIAR CONTRASEÑA ===================== -->
+      @if (modo() === 'password') {
+        <section class="panel edit-panel">
+          <span class="page-breadcrumb">PERFIL / SEGURIDAD</span>
+          <h3 class="edit-title">Cambiar contraseña</h3>
+
+          @if (errorFormulario()) {
+            <div class="alert-box-error" role="alert"><span class="alert-text">{{ errorFormulario() }}</span></div>
+          }
+
+          <form [formGroup]="passwordForm" (ngSubmit)="guardarPassword()" class="register-form" novalidate>
+            <div class="form-field">
+              <label for="pw-actual" class="field-label">Contraseña actual</label>
+              <input id="pw-actual" type="password" formControlName="passwordActual" autocomplete="current-password"
+                     class="form-input" [class.input-invalid]="invalido(passwordForm, 'passwordActual')" />
+            </div>
+            <div class="form-row-two-cols">
+              <div class="form-field">
+                <label for="pw-nueva" class="field-label">Nueva contraseña</label>
+                <input id="pw-nueva" type="password" formControlName="password" autocomplete="new-password"
+                       class="form-input" [class.input-invalid]="invalido(passwordForm, 'password')" />
+                <span class="field-hint-text">Mínimo 8 caracteres, una mayúscula y un número.</span>
+              </div>
+              <div class="form-field">
+                <label for="pw-repetir" class="field-label">Repetir nueva contraseña</label>
+                <input id="pw-repetir" type="password" formControlName="repetirPassword" autocomplete="new-password"
+                       (blur)="coincidencia.confirmarAhora()" class="form-input"
+                       [class.input-invalid]="coincidencia.estado() === 'no-coinciden'" />
+                @switch (coincidencia.estado()) {
+                  @case ('coinciden') { <span class="field-success-text">✓ Las contraseñas coinciden</span> }
+                  @case ('no-coinciden') { <small class="field-error-msg">Las contraseñas no coinciden.</small> }
+                }
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" (click)="cancelar()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" [disabled]="guardando()">
+                {{ guardando() ? 'Guardando...' : 'Cambiar contraseña' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <div class="profile-grid">
+        <!-- Datos personales -->
         <aside class="personal-data-col">
           <div class="personal-data-card">
             <div class="card-title-row">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="title-icon">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
               </svg>
               <h3 class="personal-data-title">Datos personales</h3>
             </div>
 
-            <!-- Campo Correo Institucional -->
             <div class="data-group">
-              <span class="data-label">Correo institucional</span>
+              <span class="data-label">Nombre completo</span>
+              <span class="data-value">{{ usuario.nombre }} {{ usuario.apellido }}</span>
+            </div>
+            <div class="data-group">
+              <span class="data-label">Correo</span>
               <span class="data-value">{{ usuario.correo }}</span>
             </div>
-
-            <!-- Campo Fecha de Nacimiento -->
             <div class="data-group">
               <span class="data-label">Fecha de nacimiento</span>
-              <span class="data-value">{{ usuario.fechaNacimiento | formatearFecha: 'corto' }}</span>
+              <span class="data-value">
+                {{ usuario.fechaNacimiento | date: 'dd/MM/yyyy' : 'UTC' }}
+                <span class="data-extra">({{ usuario.fechaNacimiento | edad }})</span>
+              </span>
+            </div>
+            <div class="data-group">
+              <span class="data-label">Perfil</span>
+              <span class="data-value capitalize">{{ usuario.perfil }}</span>
+            </div>
+            <div class="data-group">
+              <span class="data-label">Miembro desde</span>
+              <span class="data-value">{{ usuario.createdAt | date: 'longDate' }}</span>
+            </div>
+            <div class="data-group">
+              <span class="data-label">Publicaciones</span>
+              <span class="data-value">{{ totalPublicaciones() }}</span>
             </div>
 
-            <!-- Aviso de privacidad -->
             <div class="privacy-notice">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="lock-icon">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
-              <span class="privacy-text">Estos datos se muestran sólo en tu perfil personal.</span>
+              <span class="privacy-text">Tu correo y tu fecha de nacimiento solo se ven en tu perfil.</span>
             </div>
           </div>
         </aside>
 
-        <!-- Columna Derecha: Mis últimas publicaciones -->
+        <!-- Últimas 3 publicaciones con sus comentarios -->
         <main class="user-posts-col">
           <div class="posts-section-header">
             <div class="section-title-wrap">
               <h3 class="section-heading">Mis últimas publicaciones</h3>
               <span class="posts-counter-badge">{{ ultimasPublicaciones().length }}</span>
             </div>
-            <p class="section-subheading">Tus tres publicaciones más recientes, ordenadas por fecha.</p>
+            <p class="section-subheading">Tus tres publicaciones más recientes y sus últimos comentarios.</p>
           </div>
 
           @if (loading()) {
@@ -93,16 +230,42 @@
           } @else {
             <div class="user-posts-list">
               @for (post of ultimasPublicaciones(); track post._id) {
-                <app-publicacion-card
-                  [publicacion]="post"
-                  (onLikeToggle)="onToggleLike($event)"
-                  (onEliminar)="onEliminarPublicacion($event)"
-                ></app-publicacion-card>
+                <div class="post-with-comments">
+                  <app-publicacion-card
+                    [publicacion]="post"
+                    (onLikeToggle)="onToggleLike($event)"
+                    (onEditar)="publicacionEditando.set($event)"
+                    (onEliminar)="onEliminarPublicacion($event)"
+                  ></app-publicacion-card>
+
+                  <div class="mini-comments">
+                    @for (c of comentariosPorPost()[post._id] || []; track c._id) {
+                      <div class="mini-comment">
+                        <img [src]="c.usuario.imagen" appImagenFallback alt="" class="mini-avatar" />
+                        <div class="mini-body">
+                          <div class="mini-meta">
+                            <strong>&#64;{{ c.usuario.nombreUsuario }}</strong>
+                            <span>· {{ c.createdAt | tiempoRelativo }}</span>
+                            @if (c.modificado) { <span class="edited-tag">(editado)</span> }
+                          </div>
+                          <p class="mini-text">{{ c.texto }}</p>
+                        </div>
+                      </div>
+                    } @empty {
+                      <p class="mini-empty">Sin comentarios todavía.</p>
+                    }
+                    @if (post.cantidadComentarios > 3) {
+                      <a [routerLink]="['/publicaciones', post._id]" class="mini-more">
+                        Ver los {{ post.cantidadComentarios }} comentarios →
+                      </a>
+                    }
+                  </div>
+                </div>
               } @empty {
                 <div class="empty-posts-card">
-                  <p class="empty-posts-text">Todavía no creaste ninguna publicación.</p>
+                  <p class="empty-posts-text">Todavía no publicaste nada.</p>
                   <a routerLink="/publicaciones" class="link-create-first">
-                    <span>Crear mi primer apunte</span>
+                    <span>Crear mi primera publicación</span>
                     <span>→</span>
                   </a>
                 </div>
@@ -110,9 +273,15 @@
             </div>
           }
         </main>
-
       </div>
     }
-
   </div>
 </div>
+
+@if (publicacionEditando(); as editando) {
+  <app-editor-publicacion
+    [publicacion]="editando"
+    (guardado)="onPublicacionEditada($event)"
+    (cerrar)="publicacionEditando.set(null)"
+  />
+}

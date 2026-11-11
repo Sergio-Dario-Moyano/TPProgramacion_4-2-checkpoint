@@ -1,0 +1,50 @@
+/* Estilos comunes a las dos pantallas del dashboard (se importan desde cada componente) */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dash-tabs {
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-card);
+}
+
+.dash-tab {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.dash-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 0 16px var(--color-primary-glow);
+}
+
+.panel {
+  margin-bottom: 1.5rem;
+}
+
+.panel-title {
+  font-size: 1.35rem;
+}
+
+.panel-sub {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.loading-box {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}

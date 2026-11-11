@@ -1,8 +1,7 @@
 /* ========================================================
-   ESTILOS CSS3 PURO - MODAL SISTEMA UTN-BUGS
+   ESTILOS CSS3 PURO - MODAL SISTEMA CHECKPOINT
    ======================================================== */
 
-/* Fondo oscuro translúcido con desenfoque de fondo */
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -19,7 +18,6 @@
   padding: 1.25rem;
 }
 
-/* Tarjeta central del modal */
 .modal-card {
   position: relative;
   width: 100%;
@@ -32,7 +30,6 @@
   animation: modalEntrada 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Botón 'X' de cierre en la esquina superior */
 .btn-close-modal {
   position: absolute;
   top: 1.5rem;
@@ -52,31 +49,27 @@
   color: var(--text-main);
 }
 
-/* Encabezado del modal */
 .modal-header {
   margin-bottom: 1.25rem;
 }
 
-/* Caja contenedora del icono */
 .modal-icon-badge {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md);
-  background-color: rgba(255, 13, 70, 0.12);
+  background-color: rgba(162, 89, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
 }
 
-/* Icono SVG interior */
 .modal-icon-badge .svg-icon {
   width: 24px;
   height: 24px;
   stroke: var(--color-primary);
 }
 
-/* Etiqueta superior monoespaciada */
 .modal-tag {
   display: inline-block;
   font-family: var(--font-mono);
@@ -87,7 +80,6 @@
   text-transform: uppercase;
 }
 
-/* Tipografía de título y descripción */
 .modal-title {
   font-size: 1.6rem;
   font-weight: 600;
@@ -104,7 +96,6 @@
   margin-bottom: 1.5rem;
 }
 
-/* Previsualización de la tarjeta de publicación a dar de baja */
 .preview-card {
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -127,7 +118,6 @@
   color: var(--text-muted);
 }
 
-/* Pie de acciones con botones alineados a la derecha */
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -135,7 +125,6 @@
   gap: 0.75rem;
 }
 
-/* Botones comunes del modal */
 .btn-modal {
   padding: 0.75rem 1.5rem;
   font-size: 0.9rem;
@@ -150,7 +139,6 @@
   transform: scale(0.98);
 }
 
-/* Botón Cancelar */
 .btn-cancel {
   background-color: var(--bg-surface-elevated);
   border: 1px solid var(--border-subtle);
@@ -161,18 +149,16 @@
   background-color: var(--border-subtle);
 }
 
-/* Botón Confirmar / Peligro */
 .btn-confirm.btn-danger {
-  background-color: var(--color-primary);
+  background-color: var(--color-danger);
   color: #ffffff;
-  box-shadow: 0 4px 14px var(--color-primary-glow);
+  box-shadow: 0 4px 14px rgba(255, 61, 90, 0.3);
 }
 
 .btn-confirm.btn-danger:hover {
-  background-color: var(--color-primary-hover);
+  background-color: #e62e4a;
 }
 
-/* Animación sutil de entrada de la tarjeta */
 @keyframes modalEntrada {
   from {
     opacity: 0;
@@ -182,4 +168,37 @@
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+.btn-confirm {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.modal-icon-badge.is-success {
+  background-color: rgba(0, 229, 255, 0.12);
+}
+
+.modal-icon-badge.is-success .svg-icon {
+  stroke: #00e5ff;
+}
+/* Variante de peligro: rojo para errores y eliminaciones */
+.modal-icon-badge.is-danger {
+  background-color: var(--color-danger-bg);
+}
+
+.modal-icon-badge.is-danger .svg-icon {
+  stroke: var(--color-danger);
+}
+
+.modal-card:has(.is-danger) .modal-tag {
+  color: var(--color-danger);
+}
+
+.modal-icon-badge.is-success .svg-icon {
+  stroke: var(--color-success);
+}
+
+.modal-icon-badge.is-success {
+  background-color: var(--color-success-bg);
 }

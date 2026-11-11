@@ -1,26 +1,43 @@
 @if (isOpen) {
-  <!-- Contenedor backdrop que cubre toda la pantalla y cierra al hacer clic fuera -->
   <div class="modal-backdrop" (click)="cancelar()">
-
-    <!-- Contenedor principal de la tarjeta modal con stopPropagation para no cerrarse al interactuar -->
     <div class="modal-card" (click)="$event.stopPropagation()">
-
-      <!-- Botón de cruz superior para cerrar -->
       <button type="button" class="btn-close-modal" (click)="cancelar()" aria-label="Cerrar modal">
         ✕
       </button>
 
-      <!-- Encabezado con icono contextual y categoría temática -->
       <div class="modal-header">
-        <div class="modal-icon-badge" [class.is-danger]="config?.esPeligro !== false">
+        <div
+          class="modal-icon-badge"
+          [class.is-danger]="config?.esPeligro !== false"
+          [class.is-success]="config?.tipoIcono === 'success'"
+        >
           @if (config?.tipoIcono === 'timer') {
-            <!-- Icono SVG de cronómetro para aviso de expiración de sesión -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
+          } @else if (config?.tipoIcono === 'success') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="8 12 11 15 16 9"></polyline>
+            </svg>
+
+          } @else if (config?.tipoIcono === 'logout') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+
+
+          } @else if (config?.tipoIcono === 'alert') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+
           } @else {
-            <!-- Icono SVG de tacho de basura para eliminación de publicaciones -->
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-icon">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -30,18 +47,15 @@
           }
         </div>
 
-        <!-- Categoría en texto monoespaciado rojo neón -->
         @if (config?.categoria) {
           <span class="modal-tag">{{ config?.categoria }}</span>
         }
       </div>
 
-      <!-- Cuerpo del modal con título y mensaje -->
       <div class="modal-body">
         <h2 class="modal-title">{{ config?.titulo }}</h2>
         <p class="modal-description">{{ config?.mensaje }}</p>
 
-        <!-- Previsualización contextual (título y datos de publicación) -->
         @if (config?.infoSecundaria) {
           <div class="preview-card">
             <h4 class="preview-title">{{ config?.infoSecundaria?.titulo }}</h4>
@@ -50,7 +64,6 @@
         }
       </div>
 
-      <!-- Barra inferior con los botones de acción -->
       <div class="modal-footer">
         @if (config?.tipo === 'confirmar') {
           <button type="button" class="btn-modal btn-cancel" (click)="cancelar()">
@@ -67,7 +80,7 @@
           {{ config?.textoConfirmar || 'Aceptar' }}
         </button>
       </div>
-
     </div>
   </div>
 }
+

@@ -1,68 +1,46 @@
-// Importamos utilidades de Angular para componentes standalone, inputs y outputs
 import { Component, computed, inject, input, output } from '@angular/core';
-// Importamos RouterLink para navegar a la vista detallada
 import { RouterLink } from '@angular/router';
-// Importamos el modelo tipado de la publicación
+import { DatePipe } from '@angular/common';
 import { IPublicacion } from '../../../../core/models/publicacion.interface';
-// Importamos el servicio de autenticación para comprobar la autoría y el rol
 import { AuthService } from '../../../../core/services/auth.service';
-// Importamos las pipes personalizadas de fecha relativa y emoticones
+import { yaDioMeGusta } from '../../../../core/utils/me-gusta';
 import { TiempoRelativoPipe } from '../../../../shared/pipes/tiempo-relativo.pipe';
-import { EmoticonPipe } from '../../../../shared/pipes/emoticon.pipe';
+import { AbreviarNumeroPipe } from '../../../../shared/pipes/abreviar-numero.pipe';
+import { CategoriaPipe } from '../../../../shared/pipes/categoria.pipe';
+import { ImagenFallbackDirective } from '../../../../shared/directives/imagen-fallback.directive';
 
 /**
- * Componente standalone que representa individualmente una tarjeta de post en el feed.
+ * Tarjeta de publicación (Sprint 2: "cada publicación debe ser un componente").
+ * Solo muestra datos y emite eventos; la página que la usa decide qué hacer.
  */
 @Component({
   selector: 'app-publicacion-card',
   standalone: true,
-  imports: [RouterLink, TiempoRelativoPipe, EmoticonPipe],
+  imports: [RouterLink, DatePipe, TiempoRelativoPipe, AbreviarNumeroPipe, CategoriaPipe, ImagenFallbackDirective],
   templateUrl: './publicacion-card.component.html',
   styleUrl: './publicacion-card.component.css'
 })
 export class PublicacionCardComponent {
-  // Inyectamos el servicio de autenticación
   private auth = inject(AuthService);
 
-  // Signal input que recibe la publicación a renderizar
   publicacion = input.required<IPublicacion>();
 
-  // Evento que notifica al componente padre cuando el usuario hace toggle de like
   onLikeToggle = output<string>();
-
-  // Evento que notifica al componente padre cuando se solicita la baja lógica del post
+  onEditar = output<IPublicacion>();
   onEliminar = output<IPublicacion>();
 
-  // Signal computada que obtiene el usuario autenticado
-  usuarioActual = computed(() => this.auth.actualUser());
+  private usuarioActual = computed(() => this.auth.actualUser());
 
-  // Signal computada que determina si el usuario logueado ya le dio "Me Gusta" a este post
-  dioMeGusta = computed(() => {
-    const userId = this.usuarioActual()?._id;
-    if (!userId) return false;
-    return this.publicacion().meGustas.includes(userId);
+  dioMeGusta = computed(() => yaDioMeGusta(this.publicacion(), this.usuarioActual()?._id));
+
+  esAutor = computed(() => {
+    const autorId = this.publicacion().usuario?._id ?? (this.publicacion().usuario as unknown as string);
+    return !!autorId && autorId.toString() === this.usuarioActual()?._id;
   });
 
-  // Signal computada que verifica si el usuario es el autor del post o si es administrador
-  puedeEliminar = computed(() => {
-    const user = this.usuarioActual();
-    if (!user) return false;
-    const esAutor = this.publicacion().usuario?._id === user._id;
-    const esAdmin = user.perfil === 'administrador';
-    return esAutor || esAdmin;
-  });
+  /** El autor puede eliminar lo suyo; un administrador puede dar de baja cualquier publicación (Sprint 4). */
+  puedeEliminar = computed(() => this.esAutor() || this.auth.esAdmin());
 
-  /**
-   * Emite el ID de la publicación para dar o quitar Me Gusta
-   */
-  toggleLike(): void {
-    this.onLikeToggle.emit(this.publicacion()._id);
-  }
-
-  /**
-   * Emite la publicación completa para abrir el modal de confirmación de baja lógica
-   */
-  solicitarEliminacion(): void {
-    this.onEliminar.emit(this.publicacion());
-  }
+  /** Baja hecha por un administrador sobre una publicación ajena. */
+  esModeracion = computed(() => !this.esAutor() && this.auth.esAdmin());
 }

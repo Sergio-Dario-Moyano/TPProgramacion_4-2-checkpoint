@@ -1,8 +1,20 @@
-<div class="spinner-container">
-  <div class="spinner-loader" aria-hidden="true">
-    <div class="spinner-ring ring-cyan"></div>
-    <div class="spinner-ring ring-red"></div>
-    <div class="spinner-core"></div>
+<div class="spinner-overlay">
+  <div class="spinner-container">
+    <div class="spinner-loader" aria-hidden="true">
+      <!-- Anillo de carga -->
+      <svg class="spinner-svg" viewBox="0 0 120 120">
+        <circle class="spinner-track" cx="60" cy="60" r="52" />
+        <circle class="spinner-progress-circle" cx="60" cy="60" r="52" />
+      </svg>
+
+      <!-- Logo en el centro del anillo -->
+      <div class="spinner-bug-badge">
+        <app-logo [conTexto]="false" tamano="40px" />
+      </div>
+    </div>
+    @if (mensaje()) {
+      <span class="spinner-message">{{ mensaje() }}</span>
+    }
   </div>
-  <p class="spinner-message">{{ mensaje() }}</p>
 </div>
+

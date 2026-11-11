@@ -1,59 +1,31 @@
-// Importamos la interfaz PipeTransform y el decorador Pipe
 import { Pipe, PipeTransform } from '@angular/core';
 
 /**
- * Pipe personalizada que convierte una marca de tiempo en una distancia relativa
- * dinámica idéntica a la usada en redes sociales modernas ("Hace 5 min", "Hace 2 h").
+ * Pipe propio: tiempoRelativo (Sprint 4).
+ * Convierte una fecha en un texto relativo: "recién", "hace 5 min", "hace 3 h", "ayer",
+ * "hace 4 días". Pasada una semana muestra la fecha (dd/mm/aaaa).
+ * Uso: {{ publicacion.createdAt | tiempoRelativo }}
  */
-@Pipe({
-  name: 'tiempoRelativo',
-  standalone: true
-})
+@Pipe({ name: 'tiempoRelativo', standalone: true })
 export class TiempoRelativoPipe implements PipeTransform {
-  /**
-   * Calcula la diferencia temporal respecto al instante actual.
-   */
-  transform(fecha: string | Date | null | undefined): string {
-    // Si la fecha es nula o indefinida, devolvemos un texto seguro por defecto
-    if (!fecha) return 'Hace un momento';
+  transform(valor: string | Date | null | undefined): string {
+    if (!valor) return '';
+    const fecha = new Date(valor);
+    if (isNaN(fecha.getTime())) return '';
 
-    // Instanciamos la fecha recibida
-    const fechaPost = new Date(fecha);
-    // Tomamos la fecha y hora actuales
-    const ahora = new Date();
+    const segundos = Math.floor((Date.now() - fecha.getTime()) / 1000);
+    if (segundos < 45) return 'recién';
 
-    // Calculamos la diferencia total en segundos
-    const diferenciaSegundos = Math.floor((ahora.getTime() - fechaPost.getTime()) / 1000);
+    const minutos = Math.floor(segundos / 60);
+    if (minutos < 60) return `hace ${Math.max(1, minutos)} min`;
 
-    // Menos de 1 segundo de diferencia
-    if (diferenciaSegundos < 1) {
-      return 'Ahora mismo';
-    }
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `hace ${horas} h`;
 
-    // Menos de 60 segundos
-    if (diferenciaSegundos < 60) {
-      return `Hace ${diferenciaSegundos} s`;
-    }
+    const dias = Math.floor(horas / 24);
+    if (dias === 1) return 'ayer';
+    if (dias < 7) return `hace ${dias} días`;
 
-    // Menos de 60 minutos
-    const diferenciaMinutos = Math.floor(diferenciaSegundos / 60);
-    if (diferenciaMinutos < 60) {
-      return `Hace ${diferenciaMinutos} min`;
-    }
-
-    // Menos de 24 horas
-    const diferenciaHoras = Math.floor(diferenciaMinutos / 60);
-    if (diferenciaHoras < 24) {
-      return `Hace ${diferenciaHoras} h`;
-    }
-
-    // Exactamente 1 día
-    const diferenciaDias = Math.floor(diferenciaHoras / 24);
-    if (diferenciaDias === 1) {
-      return 'Hace 1 día';
-    }
-
-    // Más de un día
-    return `Hace ${diferenciaDias} días`;
+    return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 }

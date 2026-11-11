@@ -1,4 +1,4 @@
-@if (authService.isAuthenticated()) {
+@if (mostrarNavbar()) {
   <app-navbar></app-navbar>
 }
 
@@ -6,5 +6,6 @@
   <router-outlet></router-outlet>
 </main>
 
-<!-- Componente modal global accesible desde cualquier página o servicio -->
+<!-- Modal global (la consigna pide modales en lugar de alert()) -->
 <app-modal></app-modal>
+

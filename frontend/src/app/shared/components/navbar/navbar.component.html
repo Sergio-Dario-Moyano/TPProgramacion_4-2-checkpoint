@@ -1,55 +1,59 @@
 <header class="navbar-wrapper">
   <div class="navbar-container">
-    <!-- Logotipo y nombre de la aplicación -->
-    <a routerLink="/publicaciones" class="brand-link">
-      <div class="brand-logo-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="brand-bug-icon">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="2" x2="12" y2="7"></line>
-          <line x1="12" y1="17" x2="12" y2="22"></line>
-          <line x1="2" y1="12" x2="7" y2="12"></line>
-          <line x1="17" y1="12" x2="22" y2="12"></line>
-          <line x1="5" y1="5" x2="8.5" y2="8.5"></line>
-          <line x1="19" y1="5" x2="15.5" y2="8.5"></line>
-        </svg>
-      </div>
-      <span class="brand-text">UTN-BUGS</span>
+    <a routerLink="/publicaciones" class="brand-link" aria-label="Ir a publicaciones">
+      <app-logo />
     </a>
 
-    <!-- Enlaces de navegación visibles en pantallas grandes (Desktop) -->
+    <!-- Navegación desktop -->
     <nav class="nav-desktop">
       <a routerLink="/publicaciones" routerLinkActive="active" class="nav-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
-          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-          <polyline points="2 17 12 22 22 17"></polyline>
-          <polyline points="2 12 12 17 22 12"></polyline>
+          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
         </svg>
         <span>Publicaciones</span>
       </a>
 
-      <a routerLink="/mi-perfil" routerLinkActive="active" class="nav-item">
-        <img [src]="usuario()?.imagen || 'assets/logo.png'" alt="Avatar" class="avatar-sm" />
-        <span>Mi Perfil</span>
+      <!-- Directiva estructural propia: solo administradores -->
+      <a *appSoloAdmin routerLink="/dashboard/usuarios" routerLinkActive="active" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Usuarios</span>
+      </a>
+      <a *appSoloAdmin routerLink="/dashboard/estadisticas" routerLinkActive="active" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Estadísticas</span>
       </a>
 
-      @if (esAdmin()) {
-        <a routerLink="/dashboard/usuarios" routerLinkActive="active" class="nav-item">
-          <span>Dashboard</span>
-          <span class="badge-admin">Admin</span>
-        </a>
-      }
+      <a routerLink="/mi-perfil" routerLinkActive="active" class="nav-item">
+        <img [src]="usuario()?.imagen" appImagenFallback alt="" class="avatar-sm" />
+        <span>Mi perfil</span>
+        @if (authService.esAdmin()) {
+          <span class="chip chip-lime admin-chip">ADMIN</span>
+        }
+      </a>
 
-      <button type="button" class="btn-logout-nav" (click)="cerrarSesion()" title="Cerrar Sesión">
+      <button type="button" class="btn-logout-nav" (click)="cerrarSesion()" title="Cerrar sesión">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="logout-icon">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
           <polyline points="16 17 21 12 16 7"></polyline>
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
-        <span>Cerrar Sesión</span>
+        <span>Salir</span>
       </button>
     </nav>
 
-    <!-- Botón hamburguesa visible únicamente en móviles -->
+    <!-- Botón del menú mobile -->
     <button type="button" class="btn-burger" (click)="toggleMenu()" aria-label="Abrir menú de navegación">
       <span class="burger-bar"></span>
       <span class="burger-bar"></span>
@@ -58,93 +62,47 @@
   </div>
 </header>
 
-<!-- Drawer Lateral Responsive para Mobile -->
+<!-- Drawer lateral (mobile) -->
 @if (menuAbierto()) {
   <div class="drawer-backdrop" (click)="cerrarMenu()">
     <aside class="drawer-panel" (click)="$event.stopPropagation()">
-      <!-- Cabecera del Drawer -->
       <div class="drawer-top">
-        <div class="brand-link">
-          <div class="brand-logo-box">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="brand-bug-icon">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="2" x2="12" y2="7"></line>
-              <line x1="12" y1="17" x2="12" y2="22"></line>
-            </svg>
-          </div>
-          <span class="brand-text">UTN-BUGS</span>
-        </div>
-        <button type="button" class="btn-close-drawer" (click)="cerrarMenu()" aria-label="Cerrar menú">
-          ✕
-        </button>
+        <app-logo />
+        <button type="button" class="btn-close-drawer" (click)="cerrarMenu()" aria-label="Cerrar menú">✕</button>
       </div>
 
-      <!-- Tarjeta del usuario logueado en el Drawer -->
       <div class="drawer-profile">
-        <img [src]="usuario()?.imagen || 'assets/logo.png'" alt="Avatar" class="avatar-drawer" />
+        <img [src]="usuario()?.imagen" appImagenFallback alt="" class="avatar-drawer" />
         <div class="profile-meta">
           <h3 class="profile-name">{{ usuario()?.nombre }} {{ usuario()?.apellido }}</h3>
           <span class="profile-handle">&#64;{{ usuario()?.nombreUsuario }}</span>
         </div>
-        @if (esAdmin()) {
-          <span class="badge-role">Administrador</span>
-        }
       </div>
 
-      <!-- Lista de enlaces de navegación en el Drawer -->
       <nav class="drawer-links">
         <a routerLink="/publicaciones" (click)="cerrarMenu()" routerLinkActive="active" class="drawer-link-item">
-          <div class="link-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drawer-icon">
-              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-            </svg>
-            <span>Publicaciones</span>
-          </div>
+          <div class="link-left"><span>Publicaciones</span></div>
           <span class="arrow-indicator">›</span>
         </a>
-
         <a routerLink="/mi-perfil" (click)="cerrarMenu()" routerLinkActive="active" class="drawer-link-item">
-          <div class="link-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drawer-icon">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <span>Mi Perfil</span>
-          </div>
+          <div class="link-left"><span>Mi perfil</span></div>
           <span class="arrow-indicator">›</span>
         </a>
-
-        @if (esAdmin()) {
-          <a routerLink="/dashboard/usuarios" (click)="cerrarMenu()" routerLinkActive="active" class="drawer-link-item">
-            <div class="link-left">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drawer-icon">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-              <span>Dashboard</span>
-            </div>
-            <span class="badge-admin">Admin</span>
-          </a>
-        }
+        <a *appSoloAdmin routerLink="/dashboard/usuarios" (click)="cerrarMenu()" routerLinkActive="active" class="drawer-link-item">
+          <div class="link-left"><span>Dashboard · Usuarios</span></div>
+          <span class="arrow-indicator">›</span>
+        </a>
+        <a *appSoloAdmin routerLink="/dashboard/estadisticas" (click)="cerrarMenu()" routerLinkActive="active" class="drawer-link-item">
+          <div class="link-left"><span>Dashboard · Estadísticas</span></div>
+          <span class="arrow-indicator">›</span>
+        </a>
       </nav>
 
-      <!-- Pie de cierre de sesión en el Drawer -->
       <div class="drawer-bottom">
         <button type="button" class="btn-drawer-logout" (click)="cerrarSesion()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="drawer-logout-icon">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          <span>Cerrar Sesión</span>
+          <span>Cerrar sesión</span>
         </button>
-
-        <span class="drawer-legal-label">
-          Navegación / sesión de {{ esAdmin() ? 'administrador' : 'usuario' }}
-        </span>
-        <span class="drawer-sublegal-label">UTN-BUGS · Comunidad académica</span>
+        <span class="drawer-sublegal-label">Checkpoint · Comunidad gamer</span>
       </div>
     </aside>
   </div>

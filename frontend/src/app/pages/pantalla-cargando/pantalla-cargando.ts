@@ -1,57 +1,105 @@
-// Importamos utilidades de componentes, ciclo de vida e inyección de dependencias
-import { Component, inject, OnInit } from '@angular/core';
-// Importamos el enrutador para redirigir según el resultado de la validación
-import { Router } from '@angular/router';
-// Importamos el servicio de autenticación para comprobar la sesión con el backend
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
-// Importamos el servicio de temporizador para encender el contador de 10 minutos
-import { ContadorService } from '../../core/services/contador.service';
+import { LogoComponent } from '../../shared/components/logo/logo.component';
+
+/** Tiempo mínimo en pantalla para que el usuario vea la carga aunque el backend responda rápido. */
+const DURACION_MINIMA_MS = 1400;
+const RUTAS_PUBLICAS = ['/login', '/registro', '/cargando'];
+
+const TIPS = [
+  'Tip: podés ordenar las publicaciones por cantidad de me gusta.',
+  'Tip: marcá la categoría "Busco equipo" para encontrar squad.',
+  'Tip: tus publicaciones se pueden editar desde el menú de cada tarjeta.',
+  'Tip: el juego de cada publicación aparece como etiqueta.',
+  'Tip: desde Mi Perfil podés cambiar tu avatar y tus datos.'
+];
 
 /**
- * Componente standalone que actúa como splash de arranque y verificación perimetral.
+ * Pantalla "cargando" (Sprint 3).
+ * Qué hace: Se muestra siempre al abrir la app. Mientras tanto valida el token contra
+ * POST /auth/autorizar. Si es válido va a publicaciones (o a la página que se pidió);
+ * si no (401), va al login.
+ * Si el servidor no responde (Render en plan gratuito tarda en "despertar"), ofrece reintentar.
  */
 @Component({
   selector: 'app-pantalla-cargando',
   standalone: true,
-  imports: [],
+  imports: [LogoComponent],
   templateUrl: './pantalla-cargando.html',
   styleUrl: './pantalla-cargando.css'
 })
-export class PantallaCargando implements OnInit {
-  // Inyectamos el servicio de autenticación
+export class PantallaCargando implements OnInit, OnDestroy {
   private auth = inject(AuthService);
-  // Inyectamos el enrutador
   private router = inject(Router);
-  // Inyectamos el servicio del contador
-  private contadorService = inject(ContadorService);
+  private route = inject(ActivatedRoute);
 
-  // Al montarse el componente en pantalla, ejecutamos la verificación
+  mensaje = signal('Validando tu sesión...');
+  tip = signal(TIPS[Math.floor(Math.random() * TIPS.length)]);
+  sinConexion = signal(false);
+
+  private timers: ReturnType<typeof setTimeout>[] = [];
+  private intervaloTips: ReturnType<typeof setInterval> | null = null;
+
   ngOnInit(): void {
-    this.verificarEstadoSesion();
+    this.intervaloTips = setInterval(() => {
+      const i = (TIPS.indexOf(this.tip()) + 1) % TIPS.length;
+      this.tip.set(TIPS[i]);
+    }, 3500);
+    this.verificarSesion();
   }
 
-  /**
-   * Consulta al endpoint silencioso de autorización.
-   * Si la cookie HttpOnly es válida, recupera los datos del usuario.
-   */
-  private verificarEstadoSesion(): void {
-    // Invocamos el método autorizarSesion con bypass de interceptor global
+  ngOnDestroy(): void {
+    this.timers.forEach(clearTimeout);
+    if (this.intervaloTips) clearInterval(this.intervaloTips);
+  }
+
+  verificarSesion(): void {
+    this.sinConexion.set(false);
+    this.mensaje.set('Validando tu sesión...');
+    const inicio = Date.now();
+    const destino = this.route.snapshot.queryParamMap.get('destino') ?? '';
+
+    this.timers.push(
+      setTimeout(() => this.mensaje.set('Despertando al servidor, puede tardar unos segundos...'), 6000)
+    );
+
+    const despuesDelMinimo = (accion: () => void) => {
+      const restante = Math.max(0, DURACION_MINIMA_MS - (Date.now() - inicio));
+      this.timers.push(setTimeout(accion, restante));
+    };
+
+    // Sin token guardado no hay sesión que validar: se evita una petición que daría 401
+    if (!this.auth.token) {
+      despuesDelMinimo(() => {
+        this.auth.limpiarSesion();
+        this.router.navigate([destino.startsWith('/registro') ? '/registro' : '/login'], { replaceUrl: true });
+      });
+      return;
+    }
+
     this.auth.autorizarSesion().subscribe({
-      next: (res: any) => {
-        // Almacenamos el usuario validado en memoria reactiva y almacenamiento local
-        this.auth.setUsuarioActual(res.usuario);
-        // Iniciamos el temporizador de 10 minutos de inactividad de la sesión
-        this.contadorService.iniciarTemporizador();
-        // Redirigimos al usuario al feed principal de publicaciones
-        this.router.navigate(['/publicaciones']);
+      next: (res) => {
+        despuesDelMinimo(() => {
+          this.auth.iniciarSesion({ usuario: res.usuario, expiraEn: res.expiraEn });
+          const esPrivada = destino && !RUTAS_PUBLICAS.some((r) => destino.startsWith(r));
+          this.router.navigateByUrl(esPrivada ? destino : '/publicaciones', { replaceUrl: true });
+        });
       },
-      error: () => {
-        // Si el token expiró o la cookie no existe, limpiamos el Signal del usuario
-        this.auth.actualUser.set(null);
-        // Removemos cualquier rastro del usuario en el almacenamiento local
-        localStorage.removeItem('usuarioActual');
-        // Redirigimos al usuario al login para que ingrese sus credenciales
-        this.router.navigate(['/login']);
+      error: (err: HttpErrorResponse) => {
+        despuesDelMinimo(() => {
+          // status 0 = no hubo respuesta del servidor (caído, sin internet, CORS)
+          if (err.status === 0) {
+            this.sinConexion.set(true);
+            this.mensaje.set('No pudimos conectar con el servidor.');
+            return;
+          }
+          // 401: token inexistente, inválido o vencido → login (o registro si lo pidió)
+          this.auth.limpiarSesion();
+          const irARegistro = destino.startsWith('/registro');
+          this.router.navigate([irARegistro ? '/registro' : '/login'], { replaceUrl: true });
+        });
       }
     });
   }

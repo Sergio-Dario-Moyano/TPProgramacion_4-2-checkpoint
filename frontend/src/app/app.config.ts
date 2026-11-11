@@ -1,36 +1,25 @@
-// Importamos la interfaz de configuración de aplicaciones de Angular
-import { ApplicationConfig, provideZoneChangeDetection, isDevMode } from '@angular/core';
-// Importamos la función proveedora del enrutador de Angular
-import { provideRouter } from '@angular/router';
-// Importamos las rutas declaradas de la aplicación
-import { routes } from './app.routes';
-// Importamos la función para proveer HttpClient con interceptores funcionales
+import { ApplicationConfig, isDevMode, provideZoneChangeDetection, LOCALE_ID } from '@angular/core';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-// Importamos nuestro interceptor de autenticación que gestiona cookies y errores 401
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-// Importamos la función proveedora del Service Worker para la PWA
 import { provideServiceWorker } from '@angular/service-worker';
+import { registerLocaleData } from '@angular/common';
+import localeEsAr from '@angular/common/locales/es-AR';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
-/**
- * Objeto de configuración global de la aplicación Angular standalone.
- */
+// Fechas y números en formato argentino (DatePipe, DecimalPipe)
+registerLocaleData(localeEsAr);
+
 export const appConfig: ApplicationConfig = {
   providers: [
-    // Optimiza la detección de cambios de Angular agrupando eventos (event coalescing)
     provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes, withComponentInputBinding()),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    { provide: LOCALE_ID, useValue: 'es-AR' },
 
-    // Registra el sistema de enrutamiento basado en las rutas definidas en app.routes.ts
-    provideRouter(routes),
-
-    // Provee el cliente HTTP e inyecta el authInterceptor en la cadena de peticiones
-    provideHttpClient(
-      withInterceptors([authInterceptor])
-    ),
-
-    // Registra el Service Worker de Angular únicamente en entornos de producción
+    // PWA (Sprint 4): el service worker solo se registra en el build de producción
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      // Registra el Service Worker tan pronto como la aplicación se estabilice
       registrationStrategy: 'registerWhenStable:30000'
     })
   ]

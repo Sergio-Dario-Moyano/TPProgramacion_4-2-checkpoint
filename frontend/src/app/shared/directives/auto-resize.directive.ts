@@ -1,48 +1,29 @@
-// Importamos utilidades del ciclo de vida y referencias al elemento del DOM
-import { Directive, ElementRef, HostListener, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, HostListener, inject } from '@angular/core';
 
 /**
- * Directiva de atributo que calcula y auto-expande la altura del textarea
- * según el volumen de texto ingresado por el usuario.
+ * Directiva propia: appAutoResize (Sprint 4).
+ * Hace que un textarea crezca a medida que se escribe, sin barra de scroll, hasta un alto máximo.
+ * Uso: <textarea appAutoResize formControlName="descripcion"></textarea>
  */
 @Directive({
-  // Se aplica como atributo a cualquier elemento textarea mediante 'appAutoResize'
   selector: 'textarea[appAutoResize]',
-  // Declarada como standalone para su libre importación
   standalone: true
 })
-export class AutoResizeDirective implements OnInit, AfterViewInit {
-  // Inyectamos la referencia nativa al elemento del DOM
-  constructor(private elementRef: ElementRef) {}
+export class AutoResizeDirective implements AfterViewInit {
+  private el = inject<ElementRef<HTMLTextAreaElement>>(ElementRef);
+  private readonly altoMaximo = 360;
 
-  // Ajuste inicial al instanciar el componente
-  ngOnInit(): void {
-    this.ajustarAltura();
-  }
-
-  // Ajuste posterior al renderizado visual de la vista
   ngAfterViewInit(): void {
-    this.ajustarAltura();
+    // Espera un ciclo para tomar el valor inicial cargado por el formulario
+    setTimeout(() => this.ajustar());
   }
 
-  // Escuchamos el evento nativo de escritura 'input' en el textarea
   @HostListener('input')
-  onInput(): void {
-    this.ajustarAltura();
-  }
-
-  /**
-   * Calcula y asigna la altura en píxeles correspondiente al scrollHeight.
-   */
-  private ajustarAltura(): void {
-    // Obtenemos la referencia nativa del textarea
-    const textarea = this.elementRef.nativeElement as HTMLTextAreaElement;
-
-    // Reseteamos primero la altura para recalcular correctamente si el usuario borra texto
+  ajustar(): void {
+    const textarea = this.el.nativeElement;
     textarea.style.height = 'auto';
-    // Asignamos la nueva altura calculada según el contenido actual
-    textarea.style.height = `${textarea.scrollHeight}px`;
-    // Ocultamos la barra de scroll vertical nativa
-    textarea.style.overflow = 'hidden';
+    const alto = Math.min(textarea.scrollHeight + 2, this.altoMaximo);
+    textarea.style.height = `${alto}px`;
+    textarea.style.overflowY = textarea.scrollHeight > this.altoMaximo ? 'auto' : 'hidden';
   }
 }

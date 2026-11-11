@@ -1,57 +1,69 @@
-// Importamos utilidades reactivas y de inyección
-import { Component, computed, inject, signal } from '@angular/core';
-// Importamos directivas de navegación por rutas
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-// Importamos el servicio de autenticación para consultar el usuario actual
 import { AuthService } from '../../../core/services/auth.service';
+import { ModalService } from '../modal/modal.service';
+import { LogoComponent } from '../logo/logo.component';
+import { SoloAdminDirective } from '../../directives/solo-admin.directive';
+import { ImagenFallbackDirective } from '../../directives/imagen-fallback.directive';
 
 /**
- * Constante del rol con privilegios de administrador para comparación
- */
-const PERFIL_ADMIN = 'administrador';
-
-/**
- * Barra de navegación principal y drawer lateral responsive.
+ * Barra de navegación superior y drawer lateral responsive para la comunidad.
+ * Qué hace: Permite navegar entre 'Publicaciones' y 'Mi Perfil', y gestionar el cierre de sesión.
+ * Cómo lo hace: Lee el usuario en sesión desde AuthService y maneja el estado del menú drawer móvil con un Signal booleano.
  */
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, LogoComponent, SoloAdminDirective, ImagenFallbackDirective],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
-  // Inyectamos el servicio de autenticación
   authService = inject(AuthService);
-
-  // Leemos la Signal del usuario autenticado
+  modalService = inject(ModalService);
   usuario = this.authService.actualUser;
 
-  // Signal booleana que controla la visibilidad del drawer mobile
   menuAbierto = signal<boolean>(false);
 
-  // Signal calculada que determina si el usuario logueado tiene perfil de administrador
-  esAdmin = computed(() => this.usuario()?.perfil === PERFIL_ADMIN);
-
   /**
-   * Alterna la apertura y cierre del menú drawer en pantallas móviles
+   * Alterna la visibilidad del drawer móvil.
+   * Qué hace: Abre o cierra el panel lateral en resoluciones pequeñas.
+   * Cómo lo hace: Invoca menuAbierto.update() invirtiendo el valor actual.
    */
   toggleMenu(): void {
     this.menuAbierto.update((estado) => !estado);
   }
 
   /**
-   * Cierra el drawer al seleccionar una ruta o hacer clic fuera
+   * Cierra el menú drawer.
+   * Qué hace: Oculta el panel al hacer clic en un enlace o en el backdrop.
+   * Cómo lo hace: Establece menuAbierto en false.
    */
   cerrarMenu(): void {
     this.menuAbierto.set(false);
   }
 
-  /**
-   * Cierra la sesión activa del usuario y oculta el drawer
+
+    /**
+   * Cierra la sesión activa previa confirmación.
+   * Qué hace: Cierra el drawer móvil, pregunta al usuario si quiere salir y, si acepta, destruye las credenciales.
+   * Cómo lo hace: Abre modalService.confirmar() y solo si resuelve en true llama a authService.logout().
    */
-  cerrarSesion(): void {
+  async cerrarSesion(): Promise<void> {
     this.cerrarMenu();
-    this.authService.logout();
+
+    const confirmado = await this.modalService.confirmar({
+      categoria: 'SESIÓN / CIERRE',
+      titulo: '¿Salir del juego?',
+      mensaje: 'Vas a salir de tu cuenta. Para volver vas a tener que iniciar sesión de nuevo.',
+      textoConfirmar: 'Cerrar sesión',
+      textoCancelar: 'Cancelar',
+      tipoIcono: 'logout',
+      esPeligro: false
+    });
+
+    if (confirmado) {
+      this.authService.logout();
+    }
   }
 }

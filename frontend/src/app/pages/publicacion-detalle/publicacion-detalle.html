@@ -1,7 +1,7 @@
 <div class="detail-layout">
   <div class="detail-container">
 
-    <!-- Botón superior de retroceso -->
+    <!-- Volver a publicaciones -->
     <nav class="detail-nav-back">
       <a routerLink="/publicaciones" class="link-back">
         <span class="back-arrow">←</span>
@@ -10,98 +10,81 @@
     </nav>
 
     @if (loadingPost()) {
-      <div class="loading-box">
-        <app-spinner mensaje="Cargando publicación..."></app-spinner>
-      </div>
+      @if (mostrarSpinner()) {
+        <div class="loading-box">
+          <app-spinner mensaje="Cargando publicación..."></app-spinner>
+        </div>
+      }
     } @else if (publicacion()) {
       <div class="detail-grid">
 
-        <!-- Columna Principal: Post y Comentarios -->
+        <!-- Columna Principal: Contenido extendido y Comentarios -->
         <main class="detail-main-col">
 
-          <!-- Tarjeta extendida del post -->
           <article class="post-extended-card">
-            <!-- Cabecera del post -->
             <header class="extended-header">
               <div class="author-block">
                 <img
-                  [src]="publicacion()!.usuario?.imagen || 'assets/logo.png'"
+                  [src]="publicacion()!.usuario.imagen" appImagenFallback
                   alt="Avatar"
                   class="author-avatar"
                 />
                 <div class="author-meta">
                   <h3 class="author-name">
-                    {{ publicacion()!.usuario?.nombre }} {{ publicacion()!.usuario?.apellido }}
+                    {{ publicacion()!.usuario.nombre }} {{ publicacion()!.usuario.apellido }}
                   </h3>
                   <div class="author-submeta">
-                    <span class="author-handle">&#64;{{ publicacion()!.usuario?.nombreUsuario }}</span>
+                    <span class="author-handle">&#64;{{ publicacion()!.usuario.nombreUsuario }}</span>
                     <span class="meta-dot">·</span>
-                    <time class="post-time">{{ publicacion()!.createdAt | tiempoRelativo }}</time>
+                    <time class="post-time" [title]="publicacion()!.createdAt | date: 'dd/MM/yyyy HH:mm'">{{ publicacion()!.createdAt | tiempoRelativo }}</time>
+                    @if (publicacion()!.modificado) {
+                      <span class="edited-tag">· editado</span>
+                    }
                   </div>
                 </div>
               </div>
+
+              <div class="post-owner-actions">
+                @if (esAutorPublicacion()) {
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="editandoPublicacion.set(true)">Editar</button>
+                }
+                @if (puedeEliminarPublicacion()) {
+                  <button type="button" class="btn btn-danger btn-sm" (click)="eliminarPublicacion()">
+                    {{ esAutorPublicacion() ? 'Eliminar' : 'Dar de baja (admin)' }}
+                  </button>
+                }
+              </div>
             </header>
 
-            <!-- Categoría en cyan -->
-            <div class="post-tag">
-              <span>ALGORITMOS Y ESTRUCTURAS DE DATOS</span>
+            <div class="post-tags">
+              <span class="chip chip-primary">{{ publicacion()!.categoria | categoria }}</span>
+              @if (publicacion()!.juego) {
+                <span class="chip chip-cyan">🎮 {{ publicacion()!.juego }}</span>
+              }
             </div>
 
-            <!-- Título principal -->
             <h1 class="post-title">{{ publicacion()!.titulo }}</h1>
 
-            <!-- Metadatos de fecha y lectura -->
             <div class="post-meta-reading">
-              <span>{{ publicacion()!.createdAt | formatearFecha: 'corto' }}</span>
+              <span>{{ publicacion()!.createdAt | date: 'longDate' }}</span>
               <span class="meta-dot">·</span>
-              <span>Lectura de 4 min</span>
+              <span>{{ publicacion()!.cantidadMeGustas | abreviarNumero }} me gusta</span>
             </div>
 
-            <!-- Cuerpo del apunte -->
             <div class="post-body">
-              <p class="post-lead">{{ publicacion()!.descripcion | emoticon }}</p>
+              <p class="post-lead">{{ publicacion()!.descripcion }}</p>
 
               @if (publicacion()!.imagenUrl) {
                 <div class="post-media-box">
-                  <img [src]="publicacion()!.imagenUrl!" alt="Adjunto de publicación" class="post-media" />
-                  <span class="media-caption">Apunte de elaboración propia · Grafo ponderado y recorrido de práctica</span>
+                  <a [href]="publicacion()!.imagenUrl!" target="_blank" rel="noopener" class="post-media-link"
+                     title="Abrir la imagen en tamaño original">
+                    <img [src]="publicacion()!.imagenUrl!" alt="Imagen de la publicación" class="post-media" />
+                  </a>
+                  <span class="media-caption">Captura compartida por &#64;{{ publicacion()!.usuario.nombreUsuario }} · clic para verla en tamaño original</span>
                 </div>
               }
-
-              <!-- Sección visual estructurada del apunte -->
-              <h3 class="section-title">Del nodo inicial al camino mínimo</h3>
-              <p class="section-text">
-                La idea es mantener la mejor distancia conocida a cada nodo. Arrancamos con distancia 0 en A e infinito en el resto. En cada paso elegimos el nodo no visitado con menor distancia y actualizamos a sus vecinos.
-              </p>
-
-              <!-- Bloque explicativo numerado -->
-              <div class="steps-card">
-                <div class="step-item">
-                  <span class="step-num">01</span>
-                  <span class="step-text">Inicializá las distancias y el conjunto de visitados.</span>
-                </div>
-                <div class="step-item">
-                  <span class="step-num">02</span>
-                  <span class="step-text">Elegí el nodo pendiente con menor costo acumulado.</span>
-                </div>
-                <div class="step-item">
-                  <span class="step-num">03</span>
-                  <span class="step-text">Relajá sus aristas y guardá el predecesor.</span>
-                </div>
-                <div class="step-item">
-                  <span class="step-num">04</span>
-                  <span class="step-text">Repetí hasta llegar al destino o agotar los nodos.</span>
-                </div>
-              </div>
-
-              <div class="post-notice">
-                <p>
-                  <strong>Importante:</strong> este algoritmo requiere pesos no negativos. Para reconstruir el recorrido, seguí los predecesores desde el destino hasta el origen. Si detectás un error o tenés otra forma de explicarlo, ¡dejala en los comentarios!
-                </p>
-              </div>
             </div>
 
-            <!-- Barra inferior con likes y comentarios -->
             <footer class="extended-footer">
               <button
                 type="button"
@@ -118,8 +101,8 @@
                 >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                 </svg>
-                <span>Me Gusta</span>
-                <span class="action-count">· {{ publicacion()!.cantidadMeGustas }}</span>
+                <span>Me gusta</span>
+                <span class="action-count">· {{ publicacion()!.cantidadMeGustas | abreviarNumero }}</span>
               </button>
 
               <div class="comments-badge">
@@ -132,22 +115,21 @@
             </footer>
           </article>
 
-          <!-- Sección de Comentarios -->
+          <!-- Sección de Comentarios (Sprint 3) -->
           <section class="comments-section">
             <div class="comments-section-header">
               <h2 class="comments-title">Comentarios ({{ totalComentarios() }})</h2>
-              <span class="comments-filter-label">Más recientes</span>
+              <span class="comments-filter-label"><span class="live-dot" aria-hidden="true"></span> En vivo · más recientes primero</span>
             </div>
 
-            <!-- Formulario para agregar comentario -->
+            <!-- Formulario para agregar nuevo comentario -->
             <div class="add-comment-card">
               <span class="add-comment-label">Sumate a la conversación</span>
               <form [formGroup]="nuevoComentarioForm" (ngSubmit)="enviarComentario()" class="comment-form">
                 <textarea
                   formControlName="texto"
                   rows="3"
-                  appAutoResize
-                  placeholder="Escribir un comentario..."
+                  placeholder="Escribí un comentario..." maxlength="150" appAutoResize
                   class="comment-textarea"
                 ></textarea>
 
@@ -167,13 +149,13 @@
               </form>
             </div>
 
-            <!-- Hilo de comentarios -->
+            <!-- Listado cronológico de comentarios -->
             <div class="comments-feed">
               @for (comentario of comentarios(); track comentario._id) {
-                <div class="comment-item">
+                <div class="comment-item" [class.comment-nuevo]="comentariosNuevos().has(comentario._id)">
                   <div class="comment-avatar-col">
                     <img
-                      [src]="comentario.usuario?.imagen || 'assets/logo.png'"
+                      [src]="comentario.usuario.imagen" appImagenFallback
                       alt="Avatar"
                       class="comment-avatar"
                     />
@@ -183,36 +165,34 @@
                     <div class="comment-header">
                       <div class="comment-user-meta">
                         <span class="comment-user-name">
-                          {{ comentario.usuario?.nombre }} {{ comentario.usuario?.apellido }}
+                          {{ comentario.usuario.nombre }} {{ comentario.usuario.apellido }}
                         </span>
-                        <span class="comment-handle">&#64;{{ comentario.usuario?.nombreUsuario }}</span>
+                        <span class="comment-handle">&#64;{{ comentario.usuario.nombreUsuario }}</span>
                         <span class="meta-dot">·</span>
-                        <time class="comment-time">{{ comentario.createdAt | tiempoRelativo }}</time>
+                        <time class="comment-time" [title]="comentario.createdAt | date: 'dd/MM/yyyy HH:mm'">{{ comentario.createdAt | tiempoRelativo }}</time>
                         @if (comentario.modificado) {
-                          <span class="edited-tag">(Editado)</span>
+                          <span class="edited-tag">(editado)</span>
                         }
                       </div>
 
-                      <!-- Acciones de edición/eliminación -->
                       <div class="comment-actions">
                         @if (esAutorComentario(comentario) && comentarioEnEdicionId() !== comentario._id) {
                           <button type="button" class="btn-edit" (click)="iniciarEdicion(comentario)">
                             Editar
                           </button>
                         }
-                        @if (esAutorComentario(comentario) || esAdmin()) {
-                          <button type="button" class="btn-delete" (click)="eliminarComentario(comentario._id)">
+                        @if (puedeEliminarComentario(comentario)) {
+                          <button type="button" class="btn-delete" (click)="eliminarComentario(comentario)" aria-label="Eliminar comentario">
                             ✕
                           </button>
                         }
                       </div>
                     </div>
 
-                    <!-- Texto del comentario o formulario de edición -->
                     @if (comentarioEnEdicionId() === comentario._id) {
                       <div class="inline-edit-box">
                         <textarea
-                          [formControl]="textoEdicionControl"
+                          [formControl]="textoEdicionControl" maxlength="150" appAutoResize
                           rows="2"
                           class="comment-textarea inline-textarea"
                         ></textarea>
@@ -226,7 +206,7 @@
                         </div>
                       </div>
                     } @else {
-                      <p class="comment-text">{{ comentario.texto | emoticon }}</p>
+                      <p class="comment-text">{{ comentario.texto }}</p>
                     }
                   </div>
                 </div>
@@ -237,7 +217,7 @@
               }
             </div>
 
-            <!-- Botón Cargar Más Comentarios -->
+            <!-- Botón Cargar Más Comentarios (Paginación incremental - Sprint 3) -->
             @if (hayMasComentarios() && comentarios().length > 0) {
               <div class="comments-pagination">
                 <button
@@ -261,37 +241,29 @@
 
         </main>
 
-        <!-- Columna Lateral: Índice y Perfil de Autor -->
+        <!-- Columna Lateral Derecha -->
         <aside class="detail-sidebar">
-          <!-- Card de índice -->
-          <div class="sidebar-card">
-            <h4 class="sidebar-card-title">En este apunte</h4>
-            <ul class="index-list">
-              <li class="index-item active">El grafo de práctica</li>
-              <li class="index-item">Cómo funciona Dijkstra</li>
-              <li class="index-item">Pasos del algoritmo</li>
-              <li class="index-item">La conversación · {{ totalComentarios() }}</li>
-            </ul>
-          </div>
-
-          <!-- Card de autor -->
           <div class="sidebar-card author-card">
             <img
-              [src]="publicacion()!.usuario?.imagen || 'assets/logo.png'"
+              [src]="publicacion()!.usuario.imagen" appImagenFallback
               alt="Avatar autor"
               class="sidebar-author-avatar"
             />
             <h4 class="sidebar-author-name">
-              {{ publicacion()!.usuario?.nombre }} {{ publicacion()!.usuario?.apellido }}
+              {{ publicacion()!.usuario.nombre }} {{ publicacion()!.usuario.apellido }}
             </h4>
-            <span class="sidebar-author-handle">&#64;{{ publicacion()!.usuario?.nombreUsuario }}</span>
+            <span class="sidebar-author-handle">&#64;{{ publicacion()!.usuario.nombreUsuario }}</span>
             <p class="sidebar-author-bio">
-              {{ publicacion()!.usuario?.descripcion || 'Estudiante de Sistemas. Compartiendo apuntes para pensar en equipo.' }}
+              {{ publicacion()!.usuario.descripcion || 'Jugador de la comunidad Checkpoint.' }}
             </p>
-            <a routerLink="/mi-perfil" class="link-author-profile">
-              <span>Ver perfil</span>
-              <span>↗</span>
-            </a>
+
+            @if (esAutorPublicacion()) {
+              <a routerLink="/mi-perfil" class="link-author-profile">
+                <span>Ver perfil</span>
+                <span>↗</span>
+              </a>
+            }
+
           </div>
         </aside>
 
@@ -299,3 +271,11 @@
     }
   </div>
 </div>
+
+@if (editandoPublicacion() && publicacion()) {
+  <app-editor-publicacion
+    [publicacion]="publicacion()!"
+    (guardado)="onPublicacionEditada($event)"
+    (cerrar)="editandoPublicacion.set(false)"
+  />
+}

@@ -1,26 +1,35 @@
-// Importamos utilidades reactivas y del ciclo de vida de Angular
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-// Importamos módulos de rutas para extraer el parámetro ID y navegar
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-// Importamos formularios reactivos para el comentario y la edición en línea
+import { DatePipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-// Importamos servicios de publicaciones, comentarios y autenticación
 import { PublicacionesService } from '../../core/services/publicaciones.service';
 import { ComentariosService } from '../../core/services/comentarios.service';
 import { AuthService } from '../../core/services/auth.service';
-// Importamos interfaces de datos tipadas
 import { IPublicacion } from '../../core/models/publicacion.interface';
 import { IComentario } from '../../core/models/comentario.interface';
-// Importamos pipes personalizadas para formateo y emoticones
-import { TiempoRelativoPipe } from '../../shared/pipes/tiempo-relativo.pipe';
-import { FormatearFechaPipe } from '../../shared/pipes/formatear-fecha.pipe';
-import { EmoticonPipe } from '../../shared/pipes/emoticon.pipe';
-// Importamos directivas de enfoque y redimensionamiento automático
-import { AutoResizeDirective } from '../../shared/directives/auto-resize.directive';
 import { SpinnerComponent } from '../../shared/components/spinner/spinner.component';
+import { ModalService } from '../../shared/components/modal/modal.service';
+import { EditorPublicacionComponent } from '../../shared/components/editor-publicacion/editor-publicacion.component';
+import { TiempoRelativoPipe } from '../../shared/pipes/tiempo-relativo.pipe';
+import { AbreviarNumeroPipe } from '../../shared/pipes/abreviar-numero.pipe';
+import { CategoriaPipe } from '../../shared/pipes/categoria.pipe';
+import { ImagenFallbackDirective } from '../../shared/directives/imagen-fallback.directive';
+import { AutoResizeDirective } from '../../shared/directives/auto-resize.directive';
+import { aplicarMeGusta, yaDioMeGusta } from '../../core/utils/me-gusta';
+import { iniciarSondeo } from '../../shared/utils/sondeo';
+
+/** Cada cuánto se buscan comentarios y me gusta nuevos (milisegundos). */
+const INTERVALO_EN_VIVO_MS = 5000;
+/** Cantidad de comentarios recientes que se comparan en cada actualización. */
+const VENTANA_COMENTARIOS = 10;
 
 /**
- * Componente standalone para la vista de detalle de publicación y sus comentarios.
+ * Componente standalone para la visualización detallada de un post y sus comentarios (Sprint 3).
+ * Qué hace: Permite ver el post completo, listar comentarios paginados, escribir nuevos comentarios,
+ * editar los propios anunciando '(Editado)' y borrar los propios (o cualquiera si es administrador).
+ * Cómo lo hace: Lee el parámetro :id de la ruta activa, consulta PublicacionesService y ComentariosService, y gestiona formularios reactivos.
  */
 @Component({
   selector: 'app-publicacion-detalle',
@@ -28,54 +37,55 @@ import { SpinnerComponent } from '../../shared/components/spinner/spinner.compon
   imports: [
     RouterLink,
     ReactiveFormsModule,
+    DatePipe,
+    SpinnerComponent,
+    EditorPublicacionComponent,
     TiempoRelativoPipe,
-    FormatearFechaPipe,
-    EmoticonPipe,
-    AutoResizeDirective,
-    SpinnerComponent
+    AbreviarNumeroPipe,
+    CategoriaPipe,
+    ImagenFallbackDirective,
+    AutoResizeDirective
   ],
   templateUrl: './publicacion-detalle.html',
   styleUrl: './publicacion-detalle.css'
 })
 export class PublicacionDetalle implements OnInit {
-  // Inyección de dependencias
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private publicacionesService = inject(PublicacionesService);
   private comentariosService = inject(ComentariosService);
   private auth = inject(AuthService);
+  private modalService = inject(ModalService);
+  private destroyRef = inject(DestroyRef);
 
+  /** Comentarios que llegaron por la actualización automática (se resaltan unos segundos). */
+  comentariosNuevos = signal<Set<string>>(new Set());
+  private actualizando = false;
+  /** Momento del último me gusta propio: evita que una respuesta vieja lo pise. */
+  private ultimaAccionLocal = 0;
 
-  readonly defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2364748b"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
-
-  // Signal del usuario en sesión
   usuarioActual = computed(() => this.auth.actualUser());
 
-  // Signal con la publicación principal
   publicacion = signal<IPublicacion | null>(null);
-
-  // Signals para el listado de comentarios
   comentarios = signal<IComentario[]>([]);
   totalComentarios = signal<number>(0);
 
-  // Signals para estados de carga
   loadingPost = signal<boolean>(true);
   loadingComentarios = signal<boolean>(false);
   enviandoComentario = signal<boolean>(false);
+  mostrarSpinner = signal<boolean>(false);
+  editandoPublicacion = signal<boolean>(false);
 
-  // Parámetros de paginación para comentarios
   private offset = 0;
   private readonly limit = 4;
   hayMasComentarios = signal<boolean>(true);
 
-  // Estado para edición en línea de un comentario
   comentarioEnEdicionId = signal<string | null>(null);
   textoEdicionControl = new FormControl<string>('', {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(150)]
   });
 
-  // Formulario reactivo para redactar un nuevo comentario
   nuevoComentarioForm = new FormGroup({
     texto: new FormControl<string>('', {
       nonNullable: true,
@@ -83,61 +93,73 @@ export class PublicacionDetalle implements OnInit {
     })
   });
 
-
-  // 1. Signal computada blindada contra undefined y contra ObjectIds poblados
-dioMeGusta = computed(() => {
-  const post = this.publicacion();
-  const userId = this.usuarioActual()?._id;
-  if (!post || !userId) return false;
-
-  const likes = post.meGustas || [];
-  return likes.some((item: any) => {
-    const id = item?._id ?? item;
-    return id?.toString() === userId.toString();
+  /**
+   * Signal computada que evalúa si el usuario autenticado dio like al post.
+   * Qué hace: Devuelve true si el ID del usuario figura en el array meGustas.
+   * Cómo lo hace: Comprueba la coincidencia sobre strings o instancias pobladas de ID.
+   */
+  dioMeGusta = computed(() => {
+    const post = this.publicacion();
+    return !!post && yaDioMeGusta(post, this.usuarioActual()?._id);
   });
-});
 
+  /**
+   * Signal computada que indica si el post pertenece al usuario autenticado.
+   * Qué hace: Permite mostrar el enlace "Ver perfil" solo cuando el autor es el usuario en sesión.
+   * Cómo lo hace: Compara publicacion().usuario._id con usuarioActual()._id.
+   */
+  esAutorPublicacion = computed(() => {
+    const autorId = this.publicacion()?.usuario?._id;
+    const userId = this.usuarioActual()?._id;
+    return !!autorId && !!userId && autorId.toString() === userId.toString();
+  });
 
-
-
-  // Signal computada que determina si el usuario dio like al post actual
-  // dioMeGusta = computed(() => {
-  //   const post = this.publicacion();
-  //   const userId = this.usuarioActual()?._id;
-  //   if (!post || !userId) return false;
-  //   return post.meGustas.includes(userId);
-  // });
+  /** El autor o un administrador (Sprint 4) pueden dar de baja la publicación. */
+  puedeEliminarPublicacion = computed(() => this.esAutorPublicacion() || this.auth.esAdmin());
 
   ngOnInit(): void {
-    // Obtenemos el parámetro 'id' de la URL activa
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.cargarPublicacion(id);
       this.cargarComentarios(id, true);
+      // Comentarios y me gusta "en tiempo real": se actualizan solos mientras la pestaña está visible
+      iniciarSondeo(() => this.actualizarEnVivo(id), INTERVALO_EN_VIVO_MS, this.destroyRef);
     } else {
       this.router.navigate(['/publicaciones']);
     }
   }
 
   /**
-   * Consulta el post por ID al backend
+   * Consulta el post por ID al backend.
+   * Qué hace: Recupera la publicación y sus datos relacionados.
+   * Cómo lo hace: Llama a publicacionesService.getById() y setea el Signal publicacion.
    */
-  private cargarPublicacion(id: string): void {
-    this.loadingPost.set(true);
-    this.publicacionesService.getById(id).subscribe({
-      next: (post) => {
-        this.publicacion.set(post);
-        this.loadingPost.set(false);
-      },
-      error: () => {
-        this.loadingPost.set(false);
-        this.router.navigate(['/publicaciones']);
-      }
-    });
-  }
+ private cargarPublicacion(id: string): void {
+  this.loadingPost.set(true);
+  const temporizador = setTimeout(() => {
+    if (this.loadingPost()) this.mostrarSpinner.set(true);
+  }, 300);
+
+  this.publicacionesService.getById(id).subscribe({
+    next: (post) => {
+      clearTimeout(temporizador);
+      this.publicacion.set(post);
+      this.loadingPost.set(false);
+      this.mostrarSpinner.set(false);
+    },
+    error: () => {
+      clearTimeout(temporizador);
+      this.loadingPost.set(false);
+      this.mostrarSpinner.set(false);
+      this.router.navigate(['/publicaciones']);
+    }
+  });
+}
 
   /**
-   * Consulta los comentarios de la publicación con paginación
+   * Consulta los comentarios de la publicación con paginación.
+   * Qué hace: Trae los comentarios de forma incremental según el límite establecido.
+   * Cómo lo hace: Invoca comentariosService.listar() y actualiza el array de comentarios y el contador total.
    */
   cargarComentarios(publicacionId: string, reiniciar: boolean = false): void {
     if (reiniciar) {
@@ -157,7 +179,7 @@ dioMeGusta = computed(() => {
             this.comentarios.update((prev) => [...prev, ...nuevos]);
           }
 
-          this.totalComentarios.set(res.total || this.comentarios().length);
+          this.totalComentarios.set(res.total ?? this.comentarios().length);
           this.offset += nuevos.length;
           this.hayMasComentarios.set(this.comentarios().length < this.totalComentarios());
           this.loadingComentarios.set(false);
@@ -169,7 +191,9 @@ dioMeGusta = computed(() => {
   }
 
   /**
-   * Carga el siguiente bloque de comentarios
+   * Solicita el siguiente lote de comentarios.
+   * Qué hace: Incrementa la lista sin borrar los comentarios ya mostrados.
+   * Cómo lo hace: Llama a cargarComentarios pasando reiniciar: false.
    */
   cargarMasComentarios(): void {
     const post = this.publicacion();
@@ -178,200 +202,200 @@ dioMeGusta = computed(() => {
     }
   }
 
-
-
-  // 2. toggleLike seguro
-toggleLike(): void {
-  const post = this.publicacion();
-  const userId = this.usuarioActual()?._id;
-  if (!post || !userId) return;
-
-  const yaDioLike = this.dioMeGusta();
-
-  if (yaDioLike) {
-    this.publicacionesService.quitarMeGusta(post._id).subscribe({
-      next: () => {
-        this.publicacion.update((p) => {
-          if (!p) return null;
-          const meGustasActuales = p.meGustas || [];
-          return {
-            ...p,
-            meGustas: meGustasActuales.filter((item: any) => {
-              const id = item?._id ?? item;
-              return id?.toString() !== userId.toString();
-            }),
-            cantidadMeGustas: Math.max(0, (p.cantidadMeGustas || 1) - 1)
-          };
-        });
-      }
-    });
-  } else {
-    this.publicacionesService.darMeGusta(post._id).subscribe({
-      next: () => {
-        this.publicacion.update((p) => {
-          if (!p) return null;
-          const meGustasActuales = p.meGustas || [];
-          return {
-            ...p,
-            meGustas: [...meGustasActuales, userId],
-            cantidadMeGustas: (p.cantidadMeGustas || 0) + 1
-          };
-        });
-      }
-    });
-  }
-}
-
-
-
-
-
-
-
+  /**
+   * Registra o remueve el Me Gusta del post actual.
+   * Qué hace: Alterna el like y sincroniza el contador reactivamente.
+   * Cómo lo hace: Llama a publicacionesService.darMeGusta o quitarMeGusta según dioMeGusta().
+   */
+  // =====================================================================
+  // Actualización en vivo
+  // =====================================================================
 
   /**
-   * Registra o quita el Me Gusta sobre la publicación actual
+   * Trae la publicación (me gusta, contador de comentarios, ediciones) y los comentarios más
+   * recientes, y los combina con lo que ya está en pantalla sin perder la paginación.
    */
-  // toggleLike(): void {
-  //   const post = this.publicacion();
-  //   const userId = this.usuarioActual()?._id;
-  //   if (!post || !userId) return;
+  private actualizarEnVivo(id: string): void {
+    if (this.actualizando || this.loadingPost() || this.loadingComentarios()) return;
+    this.actualizando = true;
 
-  //   if (this.dioMeGusta()) {
-  //     this.publicacionesService.quitarMeGusta(post._id).subscribe({
-  //       next: () => {
-  //         this.publicacion.update((p) => {
-  //           if (!p) return null;
-  //           return {
-  //             ...p,
-  //             meGustas: p.meGustas.filter((id) => id !== userId),
-  //             cantidadMeGustas: Math.max(0, p.cantidadMeGustas - 1)
-  //           };
-  //         });
-  //       }
-  //     });
-  //   } else {
-  //     this.publicacionesService.darMeGusta(post._id).subscribe({
-  //       next: () => {
-  //         this.publicacion.update((p) => {
-  //           if (!p) return null;
-  //           return {
-  //             ...p,
-  //             meGustas: [...p.meGustas, userId],
-  //             cantidadMeGustas: p.cantidadMeGustas + 1
-  //           };
-  //         });
-  //       }
-  //     });
-  //   }
-  // }
-
-
-
-
-
-
-// 3. enviarComentario sin romper los controles reactivos (_syncPendingControls)
-enviarComentario(): void {
-  if (this.nuevoComentarioForm.invalid) {
-    this.nuevoComentarioForm.markAllAsTouched();
-    return;
+    forkJoin({
+      post: this.publicacionesService.getById(id),
+      comentarios: this.comentariosService.listar(id, VENTANA_COMENTARIOS, 0)
+    }).subscribe({
+      next: ({ post, comentarios }) => {
+        this.actualizando = false;
+        if (Date.now() - this.ultimaAccionLocal > 2500) this.publicacion.set(post);
+        this.fusionarComentarios(comentarios.comentarios || [], comentarios.total ?? 0);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.actualizando = false;
+        if (err.status === 404) this.publicacionDadaDeBaja();
+      }
+    });
   }
 
-  // Obtenemos el ID del post priorizando _id, luego id, y de fallback el parámetro de la URL
-  const post = this.publicacion();
-  const idDeRuta = this.route.snapshot.paramMap.get('id');
-  const postIdentificador = (post as any)?._id || (post as any)?.id || idDeRuta;
+  private fusionarComentarios(recientes: IComentario[], total: number): void {
+    const actuales = this.comentarios();
+    const idsActuales = new Set(actuales.map((c) => c._id));
+    const recientesPorId = new Map(recientes.map((c) => [c._id, c]));
 
-  if (!postIdentificador || postIdentificador === 'undefined') {
-    console.error('No se encontró el ID de la publicación para comentar');
-    return;
-  }
+    // Si llegaron menos que la ventana, son todos los comentarios que existen
+    const sonTodos = recientes.length < VENTANA_COMENTARIOS;
+    const limite = recientes.length ? new Date(recientes[recientes.length - 1].createdAt).getTime() : Infinity;
 
-  const texto = this.nuevoComentarioForm.controls.texto.value?.trim();
-  if (!texto) return;
+    const nuevos = recientes.filter((c) => !idsActuales.has(c._id));
+    const eliminados = new Set(
+      actuales
+        .filter((c) => !recientesPorId.has(c._id) && (sonTodos || new Date(c.createdAt).getTime() >= limite))
+        .map((c) => c._id)
+    );
 
-  this.enviandoComentario.set(true);
-
-  this.comentariosService.crear(postIdentificador, texto).subscribe({
-    next: (nuevoComentario) => {
-      this.enviandoComentario.set(false);
-      this.nuevoComentarioForm.reset({ texto: '' });
-
-      this.comentarios.update((lista) => [nuevoComentario, ...lista]);
-      this.totalComentarios.update((t) => t + 1);
-
-      this.publicacion.update((p) => {
-        if (!p) return null;
-        return {
-          ...p,
-          cantidadComentarios: (p.cantidadComentarios || 0) + 1
-        };
+    let huboCambios = nuevos.length > 0 || eliminados.size > 0 || total !== this.totalComentarios();
+    const conservados = actuales
+      .filter((c) => !eliminados.has(c._id))
+      .map((c) => {
+        const reciente = recientesPorId.get(c._id);
+        // No se pisa un comentario que el usuario está editando en este momento
+        if (!reciente || this.comentarioEnEdicionId() === c._id) return c;
+        if (reciente.texto !== c.texto || reciente.modificado !== c.modificado) {
+          huboCambios = true;
+          return { ...c, texto: reciente.texto, modificado: reciente.modificado };
+        }
+        return c;
       });
-    },
-    error: (err) => {
-      console.error('Error al enviar comentario:', err);
-      this.enviandoComentario.set(false);
+
+    if (!huboCambios) return;
+
+    const lista = [...nuevos, ...conservados];
+    this.comentarios.set(lista);
+    this.offset = Math.max(0, this.offset + nuevos.length - eliminados.size);
+    this.totalComentarios.set(total);
+    this.hayMasComentarios.set(lista.length < total);
+
+    if (nuevos.length) {
+      const ids = nuevos.map((c) => c._id);
+      this.comentariosNuevos.update((set) => new Set([...set, ...ids]));
+      setTimeout(() => {
+        this.comentariosNuevos.update((set) => {
+          const copia = new Set(set);
+          ids.forEach((i) => copia.delete(i));
+          return copia;
+        });
+      }, 4000);
     }
-  });
-}
+  }
 
+  private publicacionDadaDeBaja(): void {
+    this.router.navigate(['/publicaciones']).then(() =>
+      this.modalService.alerta({
+        categoria: 'PUBLICACIÓN / NO DISPONIBLE',
+        titulo: 'La publicación ya no está disponible',
+        mensaje: 'Fue eliminada por su autor o dada de baja por un administrador.',
+        textoConfirmar: 'Volver a publicaciones',
+        tipoIcono: 'alert',
+        esPeligro: false
+      })
+    );
+  }
 
+  toggleLike(): void {
+    const post = this.publicacion();
+    const userId = this.usuarioActual()?._id;
+    if (!post || !userId) return;
 
+    const dar = !this.dioMeGusta();
+    this.ultimaAccionLocal = Date.now();
+    this.publicacion.set(aplicarMeGusta(post, userId, dar));
 
+    const peticion = dar
+      ? this.publicacionesService.darMeGusta(post._id)
+      : this.publicacionesService.quitarMeGusta(post._id);
 
+    peticion.subscribe({
+      // Si falla (salvo 409: el estado ya era ese) se vuelve al estado anterior
+      error: (err) => {
+        if (err.status !== 409) this.publicacion.set(post);
+      }
+    });
+  }
 
+  onPublicacionEditada(actualizada: IPublicacion): void {
+    this.publicacion.set(actualizada);
+    this.editandoPublicacion.set(false);
+  }
 
+  async eliminarPublicacion(): Promise<void> {
+    const post = this.publicacion();
+    if (!post) return;
 
+    const confirmado = await this.modalService.confirmar({
+      categoria: this.esAutorPublicacion() ? 'PUBLICACIÓN / ELIMINAR' : 'MODERACIÓN / ADMINISTRADOR',
+      titulo: this.esAutorPublicacion() ? '¿Eliminar tu publicación?' : '¿Dar de baja esta publicación?',
+      mensaje: 'La publicación y sus comentarios dejarán de estar visibles para la comunidad.',
+      infoSecundaria: { titulo: post.titulo, subtitulo: `@${post.usuario.nombreUsuario}` },
+      textoConfirmar: 'Eliminar',
+      textoCancelar: 'Cancelar',
+      tipoIcono: 'trash',
+      esPeligro: true
+    });
+    if (!confirmado) return;
 
-
-
-
-
-
-
-
-
-
+    this.publicacionesService.eliminar(post._id).subscribe({
+      next: () => this.router.navigate(['/publicaciones'])
+    });
+  }
 
   /**
-   * Envía un nuevo comentario al backend
+   * Envía un nuevo comentario al post.
+   * Qué hace: Agrega el comentario al principio del hilo y actualiza los contadores.
+   * Cómo lo hace: Invoca comentariosService.crear() con el texto y resetea el formulario reactivo.
    */
-  // enviarComentario(): void {
-  //   if (this.nuevoComentarioForm.invalid) {
-  //     this.nuevoComentarioForm.markAllAsTouched();
-  //     return;
-  //   }
+  enviarComentario(): void {
+    if (this.nuevoComentarioForm.invalid) {
+      this.nuevoComentarioForm.markAllAsTouched();
+      return;
+    }
 
-  //   const post = this.publicacion();
-  //   if (!post) return;
+    const post = this.publicacion();
+    const idDeRuta = this.route.snapshot.paramMap.get('id');
+    const postIdentificador = post?._id || idDeRuta;
 
-  //   this.enviandoComentario.set(true);
-  //   const texto = this.nuevoComentarioForm.controls.texto.value;
+    if (!postIdentificador) return;
 
-  //   this.comentariosService.crear(post._id, texto).subscribe({
-  //     next: (nuevoComentario) => {
-  //       this.enviandoComentario.set(false);
-  //       this.nuevoComentarioForm.reset();
+    const texto = this.nuevoComentarioForm.controls.texto.value?.trim();
+    if (!texto) return;
 
-  //       // Agregamos el nuevo comentario al inicio del listado reactivo
-  //       this.comentarios.update((lista) => [nuevoComentario, ...lista]);
-  //       this.totalComentarios.update((t) => t + 1);
+    this.enviandoComentario.set(true);
 
-  //       // Actualizamos el contador de comentarios en la publicación
-  //       this.publicacion.update((p) => {
-  //         if (!p) return null;
-  //         return { ...p, cantidadComentarios: p.cantidadComentarios + 1 };
-  //       });
-  //     },
-  //     error: () => {
-  //       this.enviandoComentario.set(false);
-  //     }
-  //   });
-  // }
+    this.comentariosService.crear(postIdentificador, texto).subscribe({
+      next: (nuevoComentario) => {
+        this.enviandoComentario.set(false);
+        this.nuevoComentarioForm.reset({ texto: '' });
+
+        this.comentarios.update((lista) => [nuevoComentario, ...lista]);
+        this.offset += 1; // Mantiene alineada la paginación con el comentario recién creado
+        this.totalComentarios.update((t) => t + 1);
+        this.hayMasComentarios.set(this.comentarios().length < this.totalComentarios());
+
+        this.publicacion.update((p) => {
+          if (!p) return null;
+          return {
+            ...p,
+            cantidadComentarios: (p.cantidadComentarios || 0) + 1
+          };
+        });
+      },
+      error: () => {
+        this.enviandoComentario.set(false);
+      }
+    });
+  }
 
   /**
-   * Habilita el modo de edición para un comentario propio
+   * Inicia el modo de edición en línea de un comentario.
+   * Qué hace: Activa el textarea con el texto original del comentario.
+   * Cómo lo hace: Setea el ID en comentarioEnEdicionId y asigna el valor al control.
    */
   iniciarEdicion(comentario: IComentario): void {
     this.comentarioEnEdicionId.set(comentario._id);
@@ -379,7 +403,9 @@ enviarComentario(): void {
   }
 
   /**
-   * Cancela la edición en línea
+   * Cancela la edición en línea del comentario.
+   * Qué hace: Vuelve a mostrar el texto original del comentario.
+   * Cómo lo hace: Pone en null comentarioEnEdicionId y resetea el control.
    */
   cancelarEdicion(): void {
     this.comentarioEnEdicionId.set(null);
@@ -387,15 +413,18 @@ enviarComentario(): void {
   }
 
   /**
-   * Guarda los cambios del comentario editado
+   * Guarda los cambios de un comentario editado (Sprint 3).
+   * Qué hace: Modifica el mensaje, descarta textos en blanco y marca que fue modificado.
+   * Cómo lo hace: Llama a comentariosService.actualizar() y actualiza el Signal del comentario con modificado: true.
    */
   guardarEdicion(comentarioId: string): void {
     if (this.textoEdicionControl.invalid) return;
 
-    const nuevoTexto = this.textoEdicionControl.value;
+    const nuevoTexto = this.textoEdicionControl.value.trim();
+    if (!nuevoTexto) return;
 
     this.comentariosService.actualizar(comentarioId, nuevoTexto).subscribe({
-      next: (comentarioActualizado) => {
+      next: () => {
         this.comentarios.update((lista) =>
           lista.map((c) => (c._id === comentarioId ? { ...c, texto: nuevoTexto, modificado: true } : c))
         );
@@ -405,13 +434,30 @@ enviarComentario(): void {
   }
 
   /**
-   * Elimina un comentario (baja lógica)
+   * Elimina un comentario (baja lógica).
+   * Qué hace: Remueve el comentario del hilo y decrementa los contadores.
+   * Cómo lo hace: Invoca comentariosService.eliminar() y actualiza los Signals locales.
    */
-  eliminarComentario(comentarioId: string): void {
+  async eliminarComentario(comentario: IComentario): Promise<void> {
+    const confirmado = await this.modalService.confirmar({
+      categoria: 'COMENTARIO / ELIMINAR',
+      titulo: '¿Eliminar el comentario?',
+      mensaje: 'El comentario dejará de verse en la publicación.',
+      infoSecundaria: { titulo: comentario.texto, subtitulo: `@${comentario.usuario.nombreUsuario}` },
+      textoConfirmar: 'Eliminar',
+      textoCancelar: 'Cancelar',
+      tipoIcono: 'trash',
+      esPeligro: true
+    });
+    if (!confirmado) return;
+
+    const comentarioId = comentario._id;
     this.comentariosService.eliminar(comentarioId).subscribe({
       next: () => {
         this.comentarios.update((lista) => lista.filter((c) => c._id !== comentarioId));
+        this.offset = Math.max(0, this.offset - 1);
         this.totalComentarios.update((t) => Math.max(0, t - 1));
+        this.hayMasComentarios.set(this.comentarios().length < this.totalComentarios());
 
         this.publicacion.update((p) => {
           if (!p) return null;
@@ -422,13 +468,21 @@ enviarComentario(): void {
   }
 
   /**
-   * Comprueba si el usuario puede editar o eliminar un comentario
+   * Comprueba si el usuario autenticado es el autor del comentario.
+   * Qué hace: Controla la visibilidad del botón de edición.
+   * Cómo lo hace: Compara usuarioActual()._id contra comentario.usuario._id.
    */
   esAutorComentario(comentario: IComentario): boolean {
     return this.usuarioActual()?._id === comentario.usuario?._id;
   }
 
-  esAdmin(): boolean {
-    return this.usuarioActual()?.perfil === 'administrador';
+  /**
+   * Comprueba si el usuario puede dar de baja un comentario.
+   * Qué hace: Habilita el botón de eliminar para el autor o para un administrador.
+   * Cómo lo hace: Combina esAutorComentario() con la verificación del perfil 'administrador'.
+   */
+  puedeEliminarComentario(comentario: IComentario): boolean {
+    return this.esAutorComentario(comentario) || this.usuarioActual()?.perfil === 'administrador';
   }
 }
+

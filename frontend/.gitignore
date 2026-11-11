@@ -42,3 +42,18 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Dependencias
+node_modules/
+
+# Builds compilados
+dist/
+.angular/
+
+# Archivos de entorno con credenciales sensibles (claves de Mongo, JWT)
+.env
+.env.local
+.env.production
+
+# Archivos subidos localmente por usuarios en el backend
+uploads/

@@ -1,53 +1,37 @@
-// Importamos utilidades de componentes, inyección y reactividad por Signals de Angular
+
 import { Component, inject, signal } from '@angular/core';
-// Importamos Router y RouterLink para redirección y navegación declarativa
-import { Router, RouterLink } from '@angular/router';
-// Importamos las clases necesarias para construir formularios reactivos y validaciones
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-// Importamos el servicio de autenticación
 import { AuthService } from '../../core/services/auth.service';
-// Importamos el servicio del contador para arrancar los timers de sesión
-import { ContadorService } from '../../core/services/contador.service';
-// Importamos la interfaz tipada para el payload de login
+import { LogoComponent } from '../../shared/components/logo/logo.component';
 import { ILogin } from '../../core/models/auth.interface';
-// Importamos el componente Spinner para el estado de carga
-import { SpinnerComponent } from '../../shared/components/spinner/spinner.component';
 
 /**
- * Componente standalone que gestiona la pantalla y el flujo de inicio de sesión.
+ * Componente standalone que gestiona el inicio de sesión (Sprint 1 y 3).
+ * Qué hace: Recibe usuario/correo y contraseña, valida el formato, inicia sesión en el backend, enciende el temporizador de 10 min y redirige a publicaciones.
+ * Cómo lo hace: Emplea FormGroup con validaciones, llama a auth.login() y si es exitoso activa contadorService.iniciarTemporizador()
+ * y router.navigate(['/publicaciones']). Mientras espera la respuesta, el template muestra la pantalla de carga con el logo.
  */
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, SpinnerComponent],
+  imports: [RouterLink, RouterLinkActive, ReactiveFormsModule, LogoComponent],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
 export class Login {
-  // Inyectamos el servicio de autenticación
   private auth = inject(AuthService);
-  // Inyectamos el servicio de enrutamiento
   private router = inject(Router);
-  // Inyectamos el servicio del temporizador de inactividad
-  private contadorService = inject(ContadorService);
 
-  // Signal booleana que controla el spinner de espera durante la autenticación
   loading = signal<boolean>(false);
-
-  // Signal que contiene el mensaje de error para desplegar el cuadro rojo de advertencia
   errorMensaje = signal<string | null>(null);
-
-  // Signal booleana para alternar la visibilidad de la contraseña (texto plano u oculta)
   togglePassword = signal<boolean>(false);
 
-  // Inicialización del formulario reactivo con validaciones requeridas por la consigna
   loginForm = new FormGroup({
-    // Campo para correo electrónico o nombre de usuario (mínimo 3 caracteres)
     credencial: new FormControl<string>('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(3)]
     }),
-    // Campo de contraseña (mínimo 8 caracteres, al menos una mayúscula y un número)
     password: new FormControl<string>('', {
       nonNullable: true,
       validators: [
@@ -58,68 +42,66 @@ export class Login {
     })
   });
 
-  /**
-   * Alterna el estado de visibilidad del texto de la contraseña
-   */
   togglePw(): void {
     this.togglePassword.update((visible) => !visible);
   }
 
-  /**
-   * Determina si un campo específico fue tocado y posee un error de validación concreto
-   */
   tieneError(controlName: keyof typeof this.loginForm.controls, errorName: string): boolean {
     const control = this.loginForm.controls[controlName];
     return !!control && control.touched && control.hasError(errorName);
   }
 
   /**
-   * Manejador de envío del formulario
+   * Procesa el envío del formulario de inicio de sesión.
+   * Qué hace: Envía credenciales al backend y maneja mensajes de error específicos (ej. cuenta deshabilitada).
+   * Cómo lo hace: Llama a auth.login() con los valores del formulario; guarda el usuario, inicia el temporizador y navega a publicaciones.
    */
   onSubmit(): void {
-    // Si el formulario contiene campos inválidos, marcamos todo como tocado y alertamos
     if (this.loginForm.invalid) {
       this.errorMensaje.set('Por favor, completá los campos correctamente antes de continuar.');
       this.loginForm.markAllAsTouched();
       return;
     }
 
-    // Activamos el estado de carga y limpiamos errores previos
     this.loading.set(true);
     this.errorMensaje.set(null);
 
-    // Extraemos los valores del formulario tipados según la interfaz ILogin
     const credenciales: ILogin = this.loginForm.getRawValue();
+    const inicio = Date.now();
+    const DURACION_MINIMA_MS = 1200;
 
-    // Invocamos el endpoint de login en el backend
+    // Ejecuta la acción cuando ya pasaron al menos 3 segundos desde el envío
+    const despuesDelMinimo = (accion: () => void) => {
+      const restante = Math.max(0, DURACION_MINIMA_MS - (Date.now() - inicio));
+      setTimeout(accion, restante);
+    };
+
     this.auth.login(credenciales).subscribe({
-      next: (res: any) => {
-        // Desactivamos el spinner
-        this.loading.set(false);
-        // Persistimos los datos del usuario en memoria reactiva y localStorage
-        this.auth.setUsuarioActual(res.usuario);
-        // Iniciamos el temporizador de inactividad de 10 minutos
-        this.contadorService.iniciarTemporizador();
-        // Redirigimos al usuario al feed principal
-        this.router.navigate(['/publicaciones']);
+      next: (res) => {
+        despuesDelMinimo(() => {
+          // Guarda el token localmente, carga el usuario y arranca el contador de 15 minutos
+          this.auth.iniciarSesion(res);
+          this.loading.set(false);
+          this.router.navigate(['/publicaciones']);
+        });
       },
       error: (err: any) => {
-        // Desactivamos el spinner ante una falla
-        this.loading.set(false);
-
-        // Obtenemos el mensaje retornado por el backend
         const mensajeBackend = err?.error?.message;
+        let textoError = 'Usuario o contraseña incorrectos.';
 
-        // Si la cuenta está deshabilitada (baja lógica), mostramos el mensaje de la captura
-        if (typeof mensajeBackend === 'string' && mensajeBackend.toLowerCase().includes('bloqueada')) {
-          this.errorMensaje.set('Tu cuenta ha sido deshabilitada. Contactá al administrador.');
+        if (err?.status === 0) {
+          textoError = 'No pudimos conectar con el servidor. Probá de nuevo en unos segundos.';
         } else if (Array.isArray(mensajeBackend)) {
-          // Si el backend responde con un arreglo de errores de validación
-          this.errorMensaje.set(mensajeBackend.join(' '));
-        } else {
-          // Mensaje por defecto para credenciales inválidas
-          this.errorMensaje.set(mensajeBackend ?? 'Credenciales incorrectas. Verificá los datos ingresados.');
+          textoError = mensajeBackend.join(' ');
+        } else if (mensajeBackend) {
+          // 401: credenciales inválidas o cuenta deshabilitada (el backend explica cuál)
+          textoError = mensajeBackend;
         }
+
+        despuesDelMinimo(() => {
+          this.loading.set(false);
+          this.errorMensaje.set(textoError);
+        });
       }
     });
   }

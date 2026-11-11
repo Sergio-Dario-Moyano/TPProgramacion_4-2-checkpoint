@@ -1,51 +1,30 @@
-<div class="verify-session-wrapper">
-  <!-- Tarjeta central de validación -->
-  <div class="verify-session-card">
+<div class="loading-screen">
+  <div class="grid-bg" aria-hidden="true"></div>
 
-    <!-- Animación del radar HUD con arcos concéntricos y el bug central -->
-    <div class="radar-container" aria-hidden="true">
-      <div class="radar-viewport">
-        <!-- Aro exterior oscuro -->
-        <div class="radar-ring-bg"></div>
-
-        <!-- Arco superior derecho rojo neón -->
-        <div class="radar-arc arc-red"></div>
-
-        <!-- Arco lateral izquierdo cyan neón -->
-        <div class="radar-arc arc-cyan"></div>
-
-        <!-- Punto luminoso pulsante del radar -->
-        <div class="radar-ping-dot"></div>
-
-        <!-- Líneas reticulares ortogonales del HUD -->
-        <div class="radar-crosshair crosshair-vertical"></div>
-        <div class="radar-crosshair crosshair-horizontal"></div>
-
-        <!-- Isotipo SVG central del bug en rojo neón -->
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="radar-bug-svg">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="2" x2="12" y2="7"></line>
-          <line x1="12" y1="17" x2="12" y2="22"></line>
-          <line x1="2" y1="12" x2="7" y2="12"></line>
-          <line x1="17" y1="12" x2="22" y2="12"></line>
-          <line x1="5" y1="5" x2="8.5" y2="8.5"></line>
-          <line x1="19" y1="5" x2="15.5" y2="8.5"></line>
-        </svg>
-      </div>
+  <div class="loading-card" role="status" aria-live="polite">
+    <div class="ring-wrap">
+      <div class="ring ring-outer"></div>
+      <div class="ring ring-inner"></div>
+      <app-logo [conTexto]="false" tamano="64px" />
     </div>
 
-    <!-- Título principal de la verificación -->
-    <h1 class="verify-title">Verificando sesión...</h1>
+    <app-logo />
+    <h1 class="loading-title">
+      @if (sinConexion()) { CONEXIÓN PERDIDA } @else { CARGANDO PARTIDA<span class="dots"></span> }
+    </h1>
+    <p class="loading-message">{{ mensaje() }}</p>
 
-    <!-- Subtítulo explicativo -->
-    <p class="verify-description">Un momento, estamos preparando tu espacio.</p>
+    @if (sinConexion()) {
+      <button type="button" class="btn btn-primary" (click)="verificarSesion()">Reintentar</button>
+    } @else {
+      <div class="progress" aria-hidden="true"><div class="progress-bar"></div></div>
+      <p class="loading-tip">{{ tip() }}</p>
+    }
 
-    <!-- Tag inferior monoespaciado en cyan -->
-    <div class="verify-badge">
+    <div class="loading-badge">
       <span class="badge-prefix">AUTH</span>
       <span class="badge-separator">/</span>
-      <span class="badge-action">VALIDANDO CREDENCIALES</span>
+      <span class="badge-action">POST /auth/autorizar</span>
     </div>
-
   </div>
 </div>

@@ -1,143 +1,140 @@
+
+
 <div class="login-wrapper">
-  <!-- Cabecera superior con marca y lema -->
-  <header class="login-header">
-    <div class="brand-link">
-      <div class="brand-logo-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="brand-bug-icon">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="2" x2="12" y2="7"></line>
-          <line x1="12" y1="17" x2="12" y2="22"></line>
-          <line x1="2" y1="12" x2="7" y2="12"></line>
-          <line x1="17" y1="12" x2="22" y2="12"></line>
-        </svg>
+  @if (!loading()) {
+    <header class="login-header">
+      <a routerLink="/login" class="brand-link"><app-logo /></a>
+
+      <div class="header-tag">
+        <nav class="header-nav-actions">
+          <a routerLink="/login" routerLinkActive="active" class="nav-btn">Login</a>
+          <a routerLink="/registro" routerLinkActive="active" class="nav-btn">Registrarse</a>
+        </nav>
       </div>
-      <span class="brand-text">UTN-BUGS</span>
-    </div>
+    </header>
 
-    <div class="header-tag">
-      <span class="prompt-symbol">&gt;_</span>
-      <span>Comunidad académica / UTN</span>
-    </div>
-  </header>
+    <main class="login-main">
+      <div class="login-card">
+        <span class="login-kicker">PRESS START</span>
+        <h1 class="login-title">Iniciar sesión</h1>
+        <p class="login-subtitle">Volvé a la partida: tu squad te está esperando.</p>
 
-  <!-- Tag de terminal centrado -->
-  <div class="terminal-banner">
-    <span class="terminal-prompt">&gt;_</span>
-    <span class="terminal-text">CÓDIGO ABIERTO. CONOCIMIENTO COMPARTIDO.</span>
-  </div>
+        @if (errorMensaje()) {
+          <div class="alert-box-error" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="alert-text">{{ errorMensaje() }}</span>
+          </div>
+        }
 
-  <!-- Contenedor central de la tarjeta de login -->
-  <main class="login-main">
-    <div class="login-card">
-      <h1 class="login-title">Iniciar Sesión</h1>
-      <p class="login-subtitle">Tu espacio de intercambio académico en la comunidad UTN.</p>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="login-form">
+          <!-- Campo: Nombre de usuario o correo -->
+          <div class="form-field">
+            <label for="credencial" class="field-label">Nombre de usuario o correo</label>
+            <div class="input-container">
+              <input
+                id="credencial"
+                type="text"
+                autofocus
+                formControlName="credencial"
+                placeholder="Tu gamertag o tu correo"
+                class="form-input"
+                [class.input-invalid]="tieneError('credencial', 'required') || tieneError('credencial', 'minlength')"
+              />
+              <span class="input-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+            </div>
 
-      <!-- Cartel de alerta roja de error / cuenta deshabilitada -->
-      @if (errorMensaje()) {
-        <div class="alert-box-error" role="alert">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-icon">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-          <span class="alert-text">{{ errorMensaje() }}</span>
-        </div>
-      }
-
-      <!-- Formulario reactivo -->
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="login-form">
-        <!-- Campo: Usuario o Correo Electrónico -->
-        <div class="form-field">
-          <label for="credencial" class="field-label">Usuario o Correo Electrónico</label>
-          <div class="input-container">
-            <input
-              id="credencial"
-              type="text"
-              formControlName="credencial"
-              placeholder="Ej: smoyano o usuario@utn.edu.ar"
-              class="form-input"
-              [class.input-invalid]="tieneError('credencial', 'required') || tieneError('credencial', 'minlength')"
-            />
-            <span class="input-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </span>
+            @if (tieneError('credencial', 'required')) {
+              <small class="field-error-msg">Este campo es obligatorio.</small>
+            }
+            @if (tieneError('credencial', 'minlength')) {
+              <small class="field-error-msg">Debe contener al menos 3 caracteres.</small>
+            }
           </div>
 
-          @if (tieneError('credencial', 'required')) {
-            <small class="field-error-msg">Este campo es obligatorio.</small>
-          }
-          @if (tieneError('credencial', 'minlength')) {
-            <small class="field-error-msg">Debe contener al menos 3 caracteres.</small>
-          }
-        </div>
+          <!-- Campo: Contraseña -->
+          <div class="form-field">
+            <label for="password" class="field-label">Contraseña</label>
+            <div class="input-container">
+              <input
+                id="password"
+                [type]="togglePassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••••••"
+                class="form-input password-input"
+                [class.input-invalid]="tieneError('password', 'required') || tieneError('password', 'minlength') || tieneError('password', 'pattern')"
+              />
+              <button
+                type="button"
+                class="btn-toggle-eye"
+                (click)="togglePw()"
+                [attr.aria-label]="togglePassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+              >
+                @if (togglePassword()) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                }
+              </button>
+            </div>
 
-        <!-- Campo: Contraseña -->
-        <div class="form-field">
-          <label for="password" class="field-label">Contraseña</label>
-          <div class="input-container">
-            <input
-              id="password"
-              [type]="togglePassword() ? 'text' : 'password'"
-              formControlName="password"
-              placeholder="••••••••••••"
-              class="form-input password-input"
-              [class.input-invalid]="tieneError('password', 'required') || tieneError('password', 'minlength') || tieneError('password', 'pattern')"
-            />
-            <button
-              type="button"
-              class="btn-toggle-eye"
-              (click)="togglePw()"
-              [attr.aria-label]="togglePassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
-            >
-              @if (togglePassword()) {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              } @else {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-svg">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              }
-            </button>
+            <span class="password-hint-text">Mínimo 8 caracteres, una mayúscula y un número</span>
+
+            @if (tieneError('password', 'required')) {
+              <small class="field-error-msg">La contraseña es obligatoria.</small>
+            }
+            @if (tieneError('password', 'minlength')) {
+              <small class="field-error-msg">Debe tener al menos 8 caracteres.</small>
+            }
+            @if (tieneError('password', 'pattern')) {
+              <small class="field-error-msg">Debe contener al menos una mayúscula y un número.</small>
+            }
           </div>
 
-          <span class="password-hint-text">Mínimo 8 caracteres, una mayúscula y un número</span>
-
-          @if (tieneError('password', 'required')) {
-            <small class="field-error-msg">La contraseña es obligatoria.</small>
-          }
-          @if (tieneError('password', 'minlength')) {
-            <small class="field-error-msg">Debe tener al menos 8 caracteres.</small>
-          }
-          @if (tieneError('password', 'pattern')) {
-            <small class="field-error-msg">Debe contener al menos una mayúscula y un número.</small>
-          }
-        </div>
-
-        <!-- Botón de acción principal -->
-        <button type="submit" class="btn-submit-login" [disabled]="loading()">
-          @if (loading()) {
-            <app-spinner mensaje="Verificando credenciales..."></app-spinner>
-          } @else {
-            <span class="btn-text">Iniciar Sesión</span>
+          <button type="submit" class="btn-submit-login">
+            <span class="btn-text">Entrar al juego</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow-icon">
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>
-          }
-        </button>
-      </form>
+          </button>
+        </form>
 
-      <!-- Enlace para registrarse -->
-      <footer class="login-footer">
-        <span class="footer-prompt">¿No tenés una cuenta?</span>
-        <a routerLink="/registro" class="footer-link">Registrate acá</a>
-      </footer>
+        <footer class="login-footer">
+          <span class="footer-prompt">¿No tenés una cuenta?</span>
+          <a routerLink="/registro" class="footer-link">Registrate acá</a>
+        </footer>
+      </div>
+    </main>
+  } @else {
+    <!-- Carga mientras se validan las credenciales -->
+    <div class="login-loading-screen">
+      <div class="login-card loading-card-state">
+        <div class="cyber-spinner-container">
+          <div class="cyber-loader">
+            <svg class="cyber-svg" viewBox="0 0 120 120">
+              <circle class="cyber-track" cx="60" cy="60" r="52" />
+              <circle class="cyber-progress" cx="60" cy="60" r="52" />
+            </svg>
+            <div class="cyber-bug-badge"><app-logo [conTexto]="false" tamano="56px" /></div>
+          </div>
+          <span class="cyber-message">Verificando credenciales...</span>
+        </div>
+      </div>
     </div>
-  </main>
+  }
 </div>

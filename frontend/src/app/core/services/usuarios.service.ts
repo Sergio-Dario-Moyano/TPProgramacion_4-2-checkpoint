@@ -1,54 +1,111 @@
-// Inyección de dependencias
 import { Injectable, inject } from '@angular/core';
-// Cliente HTTP
-import { HttpClient } from '@angular/common/http';
-// Entorno con la URL base
-import { environment } from '../../../environments/environment';
-// Flujo Observable
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-// Modelo tipado de usuario
-import { IUsuario } from '../models/auth.interface';
+import { environment } from '../../../environments/environment';
+import { IRespuestaSesion, IUsuario, RolUsuario } from '../models/auth.interface';
 
-/**
- * Servicio administrativo para la gestión de usuarios:
- * listado de cuentas, alta directa desde el panel y control de estado (alta/baja lógica).
- */
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class UsuariosService {
-  // Inyección de HttpClient
   private http = inject(HttpClient);
-  // URL base para las rutas administrativas de usuarios
   private readonly API_URL = `${environment.apiUrl || 'http://localhost:3000'}/usuarios`;
 
-  /**
-   * Obtiene la lista completa de usuarios registrados (requiere rol administrador).
-   */
-  listarTodos(): Observable<{ usuarios: IUsuario[] }> {
-    return this.http.get<{ usuarios: IUsuario[] }>(this.API_URL);
+  // ---------------- Mi perfil ----------------
+
+  /** PUT /usuarios/perfil: devuelve el usuario actualizado y un token nuevo. */
+  actualizarPerfil(formData: FormData): Observable<IRespuestaSesion> {
+    return this.http.put<IRespuestaSesion>(`${this.API_URL}/perfil`, formData);
   }
 
-  /**
-   * Crea un nuevo usuario desde el panel administrativo enviando FormData (incluye foto de perfil).
-   * Permite asignar rol de 'usuario' o 'administrador'.
-   */
-  crearUsuario(formData: FormData): Observable<any> {
-    return this.http.post(this.API_URL, formData);
+  cambiarPassword(datos: {
+    passwordActual: string;
+    passwordNueva: string;
+    repetirPassword: string;
+  }): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.API_URL}/perfil/password`, datos);
   }
 
-  /**
-   * Realiza la baja lógica de un usuario (activo = false).
-   * El usuario deshabilitado no podrá iniciar sesión y será notificado.
-   */
-  deshabilitar(id: string): Observable<any> {
-    return this.http.delete(`${this.API_URL}/${id}`);
+  // ---------------- Dashboard (Sprint 4) ----------------
+
+  listar(busqueda = '', estado: 'todos' | 'activos' | 'inactivos' = 'todos'): Observable<{ usuarios: IUsuario[]; total: number }> {
+    let params = new HttpParams().set('estado', estado);
+    if (busqueda.trim()) params = params.set('busqueda', busqueda.trim());
+    return this.http.get<{ usuarios: IUsuario[]; total: number }>(this.API_URL, { params });
   }
 
-  /**
-   * Realiza el alta lógica, rehabilitando una cuenta deshabilitada (activo = true).
-   */
-  habilitar(id: string): Observable<any> {
-    return this.http.post(`${this.API_URL}/${id}/restaurar`, {});
+  crear(formData: FormData): Observable<{ message: string; usuario: IUsuario }> {
+    return this.http.post<{ message: string; usuario: IUsuario }>(this.API_URL, formData);
+  }
+
+  deshabilitar(id: string): Observable<{ message: string; usuario: IUsuario }> {
+    return this.http.delete<{ message: string; usuario: IUsuario }>(`${this.API_URL}/${id}`);
+  }
+
+  habilitar(id: string): Observable<{ message: string; usuario: IUsuario }> {
+    return this.http.post<{ message: string; usuario: IUsuario }>(`${this.API_URL}/${id}/habilitar`, {});
+  }
+
+  /** PATCH /usuarios/:id/perfil: convierte a un usuario existente en administrador o al revés. */
+  cambiarRol(id: string, perfil: RolUsuario): Observable<{ message: string; usuario: IUsuario }> {
+    return this.http.patch<{ message: string; usuario: IUsuario }>(`${this.API_URL}/${id}/perfil`, { perfil });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { Injectable, inject } from '@angular/core';
+// import { HttpClient, HttpParams } from '@angular/common/http';
+// import { Observable } from 'rxjs';
+// import { environment } from '../../../environments/environment';
+// import { IRespuestaSesion, IUsuario } from '../models/auth.interface';
+
+// @Injectable({ providedIn: 'root' })
+// export class UsuariosService {
+//   private http = inject(HttpClient);
+//   private readonly API_URL = `${environment.apiUrl || 'http://localhost:3000'}/usuarios`;
+
+//   // ---------------- Mi perfil ----------------
+
+//   /** PUT /usuarios/perfil: devuelve el usuario actualizado y un token nuevo. */
+//   actualizarPerfil(formData: FormData): Observable<IRespuestaSesion> {
+//     return this.http.put<IRespuestaSesion>(`${this.API_URL}/perfil`, formData);
+//   }
+
+//   cambiarPassword(datos: {
+//     passwordActual: string;
+//     passwordNueva: string;
+//     repetirPassword: string;
+//   }): Observable<{ message: string }> {
+//     return this.http.put<{ message: string }>(`${this.API_URL}/perfil/password`, datos);
+//   }
+
+//   // ---------------- Dashboard (Sprint 4) ----------------
+
+//   listar(busqueda = '', estado: 'todos' | 'activos' | 'inactivos' = 'todos'): Observable<{ usuarios: IUsuario[]; total: number }> {
+//     let params = new HttpParams().set('estado', estado);
+//     if (busqueda.trim()) params = params.set('busqueda', busqueda.trim());
+//     return this.http.get<{ usuarios: IUsuario[]; total: number }>(this.API_URL, { params });
+//   }
+
+//   crear(formData: FormData): Observable<{ message: string; usuario: IUsuario }> {
+//     return this.http.post<{ message: string; usuario: IUsuario }>(this.API_URL, formData);
+//   }
+
+//   deshabilitar(id: string): Observable<{ message: string; usuario: IUsuario }> {
+//     return this.http.delete<{ message: string; usuario: IUsuario }>(`${this.API_URL}/${id}`);
+//   }
+
+//   habilitar(id: string): Observable<{ message: string; usuario: IUsuario }> {
+//     return this.http.post<{ message: string; usuario: IUsuario }>(`${this.API_URL}/${id}/habilitar`, {});
+//   }
+// }

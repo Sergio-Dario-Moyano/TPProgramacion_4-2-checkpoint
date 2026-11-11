@@ -1,5 +1,5 @@
 /* ========================================================
-   ESTILOS CSS3 PURO - FEED DE PUBLICACIONES UTN-BUGS
+   ESTILOS CSS3 PURO - FEED DE PUBLICACIONES CHECKPOINT
    ======================================================== */
 
 .feed-layout {
@@ -13,7 +13,6 @@
   margin: 0 auto;
 }
 
-/* Encabezado */
 .feed-header {
   margin-bottom: 2.5rem;
 }
@@ -41,7 +40,6 @@
   color: var(--text-secondary);
 }
 
-/* Grid principal */
 .feed-grid {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -55,14 +53,12 @@
   }
 }
 
-/* Columna de posts */
 .feed-main-col {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-/* Tarjeta crear post */
 .create-post-card {
   background-color: var(--bg-surface-card);
   border: 1px solid var(--border-card);
@@ -152,6 +148,7 @@
   outline: none;
   font-family: var(--font-sans);
   line-height: 1.5;
+  resize: vertical;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -240,7 +237,6 @@
   height: 16px;
 }
 
-/* Filtros */
 .feed-filter-bar {
   display: flex;
   align-items: flex-end;
@@ -290,8 +286,8 @@
 }
 
 .btn-pill.active {
-  background-color: rgba(255, 13, 70, 0.12);
-  border-color: rgba(255, 13, 70, 0.4);
+  background-color: rgba(162, 89, 255, 0.12);
+  border-color: rgba(162, 89, 255, 0.4);
   color: var(--color-primary);
 }
 
@@ -305,7 +301,6 @@
   color: var(--text-muted);
 }
 
-/* Lista de posts */
 .posts-list {
   display: flex;
   flex-direction: column;
@@ -322,7 +317,6 @@
   font-size: 0.95rem;
 }
 
-/* Paginación */
 .pagination-container {
   display: flex;
   flex-direction: column;
@@ -355,7 +349,6 @@
   color: var(--text-muted);
 }
 
-/* Barra Lateral (Sidebar) */
 .feed-sidebar {
   display: flex;
   flex-direction: column;
@@ -391,38 +384,6 @@
   font-size: 0.85rem;
   line-height: 1.55;
   color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.community-stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.stat-box {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-number {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--color-cyan);
-  font-family: var(--font-mono);
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.sidebar-time-badge {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
 }
 
 .card-subtitle {
@@ -452,15 +413,124 @@
   font-family: var(--font-mono);
   font-weight: 600;
 }
-
-.rules-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+/* ---- Agregados: categoría / juego / filtros ---- */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
-.rules-heart {
-  color: var(--color-primary);
-  font-size: 1.1rem;
+@media (max-width: 560px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.opcional {
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.form-hint-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
+.char-count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.5rem 0 1.25rem;
+}
+
+.chip-filter {
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.chip-filter:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+.sidebar-card + .sidebar-card {
+  margin-top: 1rem;
+}
+
+.sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.sidebar-list .chip {
+  margin-right: 0.4rem;
+}
+
+.loading-state,
+.empty-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* ---- Aviso de publicaciones nuevas (actualización en vivo) ---- */
+.new-posts-banner {
+  position: sticky;
+  top: 84px;
+  z-index: 5;
+  display: block;
+  margin: 0 auto 1rem;
+  padding: 0.55rem 1.2rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(162, 89, 255, 0.5);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  box-shadow: 0 6px 24px var(--color-primary-glow);
+  animation: bajar 0.3s ease-out;
+}
+
+.new-posts-banner:hover {
+  background: var(--color-primary-hover);
+}
+
+@keyframes bajar {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* Zona para soltar la imagen de la publicación */
+.attachment-box {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px dashed var(--border-card);
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+}
+
+.drop-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }

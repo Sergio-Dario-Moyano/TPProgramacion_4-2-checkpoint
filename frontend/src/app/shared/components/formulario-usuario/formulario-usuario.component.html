@@ -1,0 +1,203 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="register-form">
+
+  @if (errorLocal()) {
+    <div class="alert-box-error" role="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="alert-icon">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span class="alert-text">{{ errorLocal() }}</span>
+    </div>
+  }
+
+  <!-- Nombre / Apellido -->
+  <div class="form-row-two-cols">
+    <div class="form-field">
+      <label for="fu-nombre" class="field-label">Nombre</label>
+      <input id="fu-nombre" type="text" formControlName="nombre" placeholder="Ej: Lucía"
+             autocomplete="given-name" class="form-input" [class.input-invalid]="invalido('nombre')" />
+      @if (tieneError('nombre', 'required')) { <small class="field-error-msg">Ingresá tu nombre.</small> }
+      @if (tieneError('nombre', 'minlength')) { <small class="field-error-msg">Mínimo 2 caracteres.</small> }
+      @if (tieneError('nombre', 'pattern')) { <small class="field-error-msg">Solo letras, sin números ni símbolos.</small> }
+    </div>
+
+    <div class="form-field">
+      <label for="fu-apellido" class="field-label">Apellido</label>
+      <input id="fu-apellido" type="text" formControlName="apellido" placeholder="Ej: González"
+             autocomplete="family-name" class="form-input" [class.input-invalid]="invalido('apellido')" />
+      @if (tieneError('apellido', 'required')) { <small class="field-error-msg">Ingresá tu apellido.</small> }
+      @if (tieneError('apellido', 'minlength')) { <small class="field-error-msg">Mínimo 2 caracteres.</small> }
+      @if (tieneError('apellido', 'pattern')) { <small class="field-error-msg">Solo letras, sin números ni símbolos.</small> }
+    </div>
+  </div>
+
+  <!-- Correo -->
+  <div class="form-field">
+    <label for="fu-correo" class="field-label">Correo electrónico</label>
+    <div class="input-with-icon">
+      <input id="fu-correo" type="email" formControlName="correo" placeholder="jugador@correo.com"
+             autocomplete="email" class="form-input" [class.input-invalid]="invalido('correo')" />
+      <span class="icon-right" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-input-icon">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+      </span>
+    </div>
+    @if (tieneError('correo', 'required')) { <small class="field-error-msg">El correo es obligatorio.</small> }
+    @if (tieneError('correo', 'email')) { <small class="field-error-msg">Ingresá un correo válido.</small> }
+  </div>
+
+  <!-- Gamertag / Fecha de nacimiento -->
+  <div class="form-row-two-cols">
+    <div class="form-field">
+      <label for="fu-usuario" class="field-label">Nombre de usuario (gamertag)</label>
+      <div class="input-with-icon">
+        <input id="fu-usuario" type="text" formControlName="nombreUsuario" placeholder="NoobMaster_69"
+               autocomplete="username" class="form-input" [class.input-invalid]="invalido('nombreUsuario')" />
+        <span class="icon-right" aria-hidden="true">&#64;</span>
+      </div>
+      <span class="field-hint-text">Único, sin espacios. Letras, números y guion bajo.</span>
+      @if (tieneError('nombreUsuario', 'required')) { <small class="field-error-msg">El nombre de usuario es obligatorio.</small> }
+      @if (tieneError('nombreUsuario', 'minlength')) { <small class="field-error-msg">Mínimo 3 caracteres.</small> }
+      @if (tieneError('nombreUsuario', 'maxlength')) { <small class="field-error-msg">Máximo 15 caracteres.</small> }
+      @if (tieneError('nombreUsuario', 'pattern')) { <small class="field-error-msg">Sin espacios ni símbolos (salvo _).</small> }
+    </div>
+
+    <div class="form-field">
+      <label for="fu-fecha" class="field-label">Fecha de nacimiento</label>
+      <input id="fu-fecha" type="date" formControlName="fechaNacimiento"
+             class="form-input date-input" [class.input-invalid]="invalido('fechaNacimiento')" />
+      @if (tieneError('fechaNacimiento', 'required')) { <small class="field-error-msg">La fecha de nacimiento es obligatoria.</small> }
+      @if (tieneError('fechaNacimiento', 'menorDeEdad')) { <small class="field-error-msg">Tenés que tener al menos 13 años.</small> }
+      @if (tieneError('fechaNacimiento', 'mayorDeEdad')) { <small class="field-error-msg">La edad máxima es 100 años.</small> }
+      @if (tieneError('fechaNacimiento', 'fechaFutura')) { <small class="field-error-msg">La fecha no puede ser futura.</small> }
+    </div>
+  </div>
+
+  <!-- Contraseña / Repetir -->
+  <div class="form-row-two-cols">
+    <div class="form-field">
+      <label for="fu-password" class="field-label">Contraseña</label>
+      <div class="input-with-icon">
+        <input id="fu-password" [type]="verPassword() ? 'text' : 'password'" formControlName="password"
+               placeholder="••••••••" autocomplete="new-password"
+               class="form-input password-input" [class.input-invalid]="invalido('password')" />
+        <button type="button" class="btn-eye" (click)="verPassword.set(!verPassword())"
+                [attr.aria-label]="verPassword() ? 'Ocultar contraseña' : 'Ver contraseña'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-input-icon">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+            @if (verPassword()) { <line x1="2" y1="2" x2="22" y2="22"></line> }
+          </svg>
+        </button>
+      </div>
+      <span class="field-hint-text">Mínimo 8 caracteres, una mayúscula y un número.</span>
+      @if (tieneError('password', 'required')) { <small class="field-error-msg">La contraseña es obligatoria.</small> }
+      @if (tieneError('password', 'minlength')) { <small class="field-error-msg">Debe tener al menos 8 caracteres.</small> }
+      @if (tieneError('password', 'pattern')) { <small class="field-error-msg">Debe incluir una mayúscula y un número.</small> }
+    </div>
+
+    <div class="form-field">
+      <label for="fu-repetir" class="field-label">Repetir contraseña</label>
+      <div class="input-with-icon">
+        <input id="fu-repetir" [type]="verRepetir() ? 'text' : 'password'" formControlName="repetirPassword"
+               placeholder="••••••••" autocomplete="new-password" (blur)="coincidencia.confirmarAhora()"
+               class="form-input password-input"
+               [class.input-invalid]="coincidencia.estado() === 'no-coinciden' || tieneError('repetirPassword', 'required')" />
+        <button type="button" class="btn-eye" (click)="verRepetir.set(!verRepetir())"
+                [attr.aria-label]="verRepetir() ? 'Ocultar contraseña' : 'Ver contraseña'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="svg-input-icon">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+            @if (verRepetir()) { <line x1="2" y1="2" x2="22" y2="22"></line> }
+          </svg>
+        </button>
+      </div>
+      <!-- El resultado aparece recién cuando el usuario deja de escribir o sale del campo -->
+      @switch (coincidencia.estado()) {
+        @case ('coinciden') { <span class="field-success-text">✓ Las contraseñas coinciden</span> }
+        @case ('no-coinciden') { <small class="field-error-msg">Las contraseñas no coinciden.</small> }
+        @case ('vacio') {
+          @if (tieneError('repetirPassword', 'required')) { <small class="field-error-msg">Repetí la contraseña.</small> }
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Foto de perfil -->
+  <div class="form-field">
+    <span class="field-label">Foto de perfil <span class="opcional">(opcional)</span></span>
+    <div class="avatar-dropzone" role="button" tabindex="0" appSoltarArchivo (archivoSoltado)="cargarFoto($event)"
+         (click)="fileInput.click()" (keydown.enter)="fileInput.click()">
+      <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/jpeg,image/png,image/webp" hidden />
+      <div class="dropzone-avatar">
+        @if (previewFoto()) {
+          <img [src]="previewFoto()!" alt="Vista previa" class="preview-img" />
+        } @else {
+          <div class="empty-avatar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-svg">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        }
+      </div>
+      <div class="dropzone-content">
+        <span class="dropzone-text">Elegí tu avatar o arrastralo acá</span>
+        <span class="dropzone-specs">JPG, PNG o WEBP · hasta 5 MB</span>
+        <div class="dropzone-actions">
+          <span class="btn-change-image">{{ previewFoto() ? 'Cambiar imagen ↗' : 'Subir imagen ↗' }}</span>
+          @if (previewFoto()) {
+            <button type="button" class="btn-quitar-foto" (click)="quitarFoto($event)">Quitar</button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Descripción -->
+  <div class="form-field">
+    <label for="fu-descripcion" class="field-label">Descripción breve</label>
+    <textarea id="fu-descripcion" formControlName="descripcion" rows="3" maxlength="250" appAutoResize
+              placeholder="Main support en Overwatch, fan de los metroidvania y siempre buscando squad para el finde."
+              class="form-textarea"></textarea>
+    <div class="textarea-footer">
+      <span class="hint-profile">Se muestra en el perfil.</span>
+      <span class="char-count" [class.danger-count]="caracteresDescripcion() > 240">{{ caracteresDescripcion() }} / 250</span>
+    </div>
+  </div>
+
+  <!-- Perfil -->
+  @if (mostrarPerfil()) {
+    <div class="form-field">
+      <span class="field-label">Perfil de la cuenta</span>
+      <div class="radio-roles-group">
+        <label class="radio-item">
+          <input type="radio" formControlName="perfil" value="usuario" />
+          <span class="radio-custom"></span>
+          <span class="radio-text">Usuario</span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" formControlName="perfil" value="administrador" />
+          <span class="radio-custom"></span>
+          <span class="radio-text">Administrador</span>
+        </label>
+      </div>
+    </div>
+  }
+
+  <button type="submit" class="btn-submit-register" [disabled]="cargando()">
+    @if (cargando()) {
+      <span class="mini-spinner" aria-hidden="true"></span>
+      <span class="btn-text">{{ textoCargando() }}</span>
+    } @else {
+      <span class="btn-text">{{ textoBoton() }}</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow-icon">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+        <polyline points="12 5 19 12 12 19"></polyline>
+      </svg>
+    }
+  </button>
+</form>

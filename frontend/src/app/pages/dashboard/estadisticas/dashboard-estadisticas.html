@@ -1,0 +1,139 @@
+<!-- Filtro de lapso de tiempo reutilizado por los tres gráficos -->
+<ng-template #filtroRango let-cual="cual" let-rango="rango">
+  <div class="range-bar">
+    <div class="presets" role="group" aria-label="Lapsos rápidos">
+      @for (p of presets; track p.dias) {
+        <button type="button" [class.active]="presetActivo(rango, p.dias)" (click)="aplicarPreset(cual, p.dias)">{{ p.texto }}</button>
+      }
+    </div>
+    <div class="range-inputs">
+      <label>Desde
+        <input type="date" class="form-input" [max]="hoy" [ngModel]="rango.desde"
+               (ngModelChange)="actualizarRango(cual, { desde: $event, hasta: rango.hasta })" />
+      </label>
+      <label>Hasta
+        <input type="date" class="form-input" [max]="hoy" [ngModel]="rango.hasta"
+               (ngModelChange)="actualizarRango(cual, { desde: rango.desde, hasta: $event })" />
+      </label>
+    </div>
+  </div>
+</ng-template>
+
+<div class="page-layout">
+  <div class="page-container">
+
+    <header class="page-header dash-header">
+      <div>
+        <span class="page-breadcrumb">DASHBOARD / ESTADÍSTICAS</span>
+        <h1 class="page-title">Actividad de la comunidad</h1>
+        <p class="page-subtitle">Elegí el lapso de tiempo de cada gráfico con los atajos o con las fechas.</p>
+      </div>
+      <nav class="dash-tabs">
+        <a routerLink="/dashboard/usuarios" routerLinkActive="active" class="dash-tab">Usuarios</a>
+        <a routerLink="/dashboard/estadisticas" routerLinkActive="active" class="dash-tab">Estadísticas</a>
+      </nav>
+    </header>
+
+    <!-- 1. Barras -->
+    <section class="panel chart-panel">
+      <div class="chart-head">
+        <div>
+          <span class="chart-type">GRÁFICO DE BARRAS</span>
+          <h2 class="panel-title">Publicaciones por usuario</h2>
+          <p class="panel-sub">{{ totalPub() }} publicaciones entre el {{ rangoPub().desde | date: 'dd/MM/yy' }} y el {{ rangoPub().hasta | date: 'dd/MM/yy' }}</p>
+        </div>
+      </div>
+      <ng-container *ngTemplateOutlet="filtroRango; context: { cual: 'pub', rango: rangoPub() }" />
+
+      @if (errorPub()) {
+        <div class="alert-box-error"><span class="alert-text">{{ errorPub() }}</span></div>
+      } @else if (cargandoPub()) {
+        <div class="loading-box"><app-spinner mensaje="Calculando..."></app-spinner></div>
+      } @else if (datosPub().length === 0) {
+        <p class="empty-chart">No hubo publicaciones en este lapso.</p>
+      } @else {
+        <app-grafico tipo="bar" [etiquetas]="etiquetasPub()" [series]="seriesPub()" [opciones]="opcionesBarras"
+                     descripcion="Barras: cantidad de publicaciones por usuario" />
+        <details class="data-table">
+          <summary>Ver tabla de datos</summary>
+          <table>
+            <thead><tr><th>Usuario</th><th>Nombre</th><th class="num">Publicaciones</th></tr></thead>
+            <tbody>
+              @for (d of datosPub(); track d.usuarioId) {
+                <tr><td>&#64;{{ d.nombreUsuario }}</td><td>{{ d.nombre }}</td><td class="num">{{ d.cantidad }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </details>
+      }
+    </section>
+
+    <div class="charts-grid">
+      <!-- 2. Líneas -->
+      <section class="panel chart-panel">
+        <div class="chart-head">
+          <div>
+            <span class="chart-type">GRÁFICO DE LÍNEAS</span>
+            <h2 class="panel-title">Comentarios por día</h2>
+            <p class="panel-sub">
+              {{ totalCom() }} comentarios en el lapso
+              @if (diaPico(); as pico) {
+                @if (pico.cantidad > 0) { · pico el {{ pico.fecha | date: 'dd/MM' }} ({{ pico.cantidad }}) }
+              }
+            </p>
+          </div>
+        </div>
+        <ng-container *ngTemplateOutlet="filtroRango; context: { cual: 'com', rango: rangoCom() }" />
+
+        @if (errorCom()) {
+          <div class="alert-box-error"><span class="alert-text">{{ errorCom() }}</span></div>
+        } @else if (cargandoCom()) {
+          <div class="loading-box"><app-spinner mensaje="Calculando..."></app-spinner></div>
+        } @else if (totalCom() === 0) {
+          <p class="empty-chart">No hubo comentarios en este lapso.</p>
+        } @else {
+          <app-grafico tipo="line" [etiquetas]="etiquetasCom()" [series]="seriesCom()" [opciones]="opcionesLineas"
+                       descripcion="Líneas: cantidad de comentarios por día" />
+        }
+      </section>
+
+      <!-- 3. Torta -->
+      <section class="panel chart-panel">
+        <div class="chart-head">
+          <div>
+            <span class="chart-type">GRÁFICO DE TORTA</span>
+            <h2 class="panel-title">Comentarios por publicación</h2>
+            <p class="panel-sub">{{ totalPost() }} comentarios en las publicaciones más comentadas</p>
+          </div>
+        </div>
+        <ng-container *ngTemplateOutlet="filtroRango; context: { cual: 'post', rango: rangoPost() }" />
+
+        @if (errorPost()) {
+          <div class="alert-box-error"><span class="alert-text">{{ errorPost() }}</span></div>
+        } @else if (cargandoPost()) {
+          <div class="loading-box"><app-spinner mensaje="Calculando..."></app-spinner></div>
+        } @else if (porciones().length === 0) {
+          <p class="empty-chart">No hubo comentarios en este lapso.</p>
+        } @else {
+          <div class="donut-layout">
+            <app-grafico tipo="doughnut" [etiquetas]="etiquetasPost()" [series]="seriesPost()" [opciones]="opcionesTorta"
+                         alto="220px" descripcion="Torta: comentarios por publicación" />
+            <!-- Leyenda con valores: el color nunca es la única forma de identificar cada porción -->
+            <ul class="legend">
+              @for (p of porciones(); track $index) {
+                <li>
+                  <span class="swatch" [style.background]="p.color"></span>
+                  <span class="legend-label">
+                    {{ p.etiqueta }}
+                    @if (!p.activa) { <span class="chip chip-danger legend-chip">dada de baja</span> }
+                  </span>
+                  <span class="legend-value">{{ p.cantidad }} · {{ porcentaje(p.cantidad) }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>

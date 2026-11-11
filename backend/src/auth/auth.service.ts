@@ -1,166 +1,258 @@
-// Importamos el decorador Injectable y las excepciones HTTP de NestJS
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-// Importamos el servicio de usuarios para interactuar con la colección en MongoDB
-import { UsuariosService } from '../usuarios/usuarios.service.js';
-// Importamos el DTO de creación de usuario
-import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto.js';
-// Importamos el DTO de login
-import { LoginDto } from './dto/login.dto.js';
-// Importamos bcrypt para la comparación y encriptación de contraseñas
-import * as bcrypt from 'bcrypt';
-// Importamos CloudinaryService para el manejo de fotos de perfil
-import { CloudinaryService } from '../cloudinary/cloudinary.service.js';
-// Importamos JwtService para la firma, decodificación y verificación de tokens
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { UsuariosService } from '../usuarios/usuarios.service.js';
+import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto.js';
+import { RolUsuario } from '../usuarios/schemas/usuario.schema.js';
+import { LoginDto } from './dto/login.dto.js';
+import { firmarToken, vencimientoToken } from './token.util.js';
 
-/**
- * Servicio encargado de la lógica criptográfica, creación de sesiones y emisión de JWT.
- */
+/** Respuesta común de registro, login, autorizar y refrescar. */
+export interface SesionRespuesta {
+  token: string;
+  expiraEn: number;
+  usuario: any;
+}
+
 @Injectable()
 export class AuthService {
-  // Inyectamos las dependencias requeridas en el constructor
   constructor(
-    private usuariosService: UsuariosService,
-    private cloudinaryService: CloudinaryService,
-    private jwtService: JwtService,
+    private readonly usuariosService: UsuariosService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /**
-   * Método privado auxiliar que empaqueta el payload seguro y genera el token firmado.
+   * Arma la sesión de un usuario.
+   * Qué hace: Firma el token y calcula su vencimiento.
+   * Cómo lo hace: Usa las utilidades compartidas firmarToken() y vencimientoToken().
    */
-  private generarToken(usuario: any): string {
-    // Definimos la carga útil (payload) del JWT sin datos sensibles
-    const payload = {
-      id: usuario._id,
-      correo: usuario.correo,
-      nombreUsuario: usuario.nombreUsuario,
-      perfil: usuario.perfil,
-    };
-    // Firmamos el payload con la clave secreta y expiración a 15 minutos
-    return this.jwtService.sign(payload);
+  private armarSesion(usuario: any): SesionRespuesta {
+    const token = firmarToken(this.jwtService, usuario);
+    return { token, expiraEn: vencimientoToken(this.jwtService, token), usuario };
   }
 
   /**
-   * Registra un nuevo usuario verificando unicidad previa y encriptando su clave.
+   * Registro (Sprint 1 y 3).
+   * Qué hace: Crea el usuario con perfil "usuario" (valida unicidad, encripta contraseña, sube foto) y abre sesión.
+   * Cómo lo hace: Delegación en usuariosService.crearUsuario() y firma del JWT.
    */
-  async registro(dto: CreateUsuarioDto, imagenUrl?: string) {
-    // Comprobamos si el correo o el alias de usuario ya existen en la base de datos
-    const credencialesExisten = await this.usuariosService.findByCorreoONombreUsuario(
-      dto.correo,
-      dto.nombreUsuario,
-    );
-    // Si ya existe coincidencia, cancelamos la creación lanzando error 409 Conflict
-    if (credencialesExisten) {
-      throw new ConflictException('El correo o nombre de usuario ya están registrados');
-    }
-
-    // Extraemos la contraseña y descartamos el campo repetirPassword
-    const { repetirPassword, password, ...datosUsuario } = dto;
-
-    // Generamos una sal aleatoria con costo 10
-    const salt = await bcrypt.genSalt(10);
-    // Encriptamos la contraseña con bcrypt
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Ensamblamos el objeto listo para persistirse en la base de datos
-    const usuarioPorCrear = {
-      ...datosUsuario,
-      password: hashedPassword,
-      imagen: imagenUrl,
-      perfil: 'usuario',
-      activo: true,
-    };
-
-    // Creamos el documento en MongoDB mediante el repositorio de usuarios
-    const usuario = await this.usuariosService.create({ ...usuarioPorCrear });
-    // Sanitizamos el resultado para remover el hash de la contraseña
-    const usuarioSanitizado = this.usuariosService.sanitizarUsuario(usuario);
-
-    // Emitimos el token JWT inicial para la sesión
-    const token = this.generarToken(usuarioSanitizado);
-
-    // Retornamos el token firmado junto con los datos públicos del usuario
-    return { token, usuario: usuarioSanitizado };
+  async registro(dto: CreateUsuarioDto, file?: Express.Multer.File): Promise<SesionRespuesta> {
+    // El registro público siempre crea perfil "usuario", aunque se envíe otro valor.
+    // Solo un administrador puede crear administradores o cambiar el rol (dashboard).
+    const usuario = await this.usuariosService.crearUsuario({ ...dto, perfil: RolUsuario.USER }, file);
+    return this.armarSesion(usuario);
   }
 
   /**
-   * Valida credenciales, comprueba que la cuenta no esté bloqueada y firma un nuevo JWT.
+   * Login (Sprint 1 y 3).
+   * Qué hace: Valida credenciales y que la cuenta esté habilitada.
+   * Cómo lo hace: Busca por correo o nombre de usuario, compara con bcrypt.compare() y firma el JWT.
+   * Devuelve 401 tanto por credenciales inválidas como por cuenta deshabilitada.
    */
-  async login(loginDto: LoginDto) {
-    // Desestructuramos la credencial (correo o alias) y la contraseña ingresada
+  async login(loginDto: LoginDto): Promise<SesionRespuesta> {
     const { credencial, password } = loginDto;
+    const usuario = await this.usuariosService.findByCorreoONombreUsuario(credencial.trim());
 
-    // Buscamos el usuario en MongoDB trayendo el campo oculto password
-    const usuario = await this.usuariosService.findByCorreoONombreUsuario(credencial);
-
-    // Si el usuario no existe en la base de datos, rechazamos el login
     if (!usuario) {
-      throw new ConflictException('Credenciales inválidas');
+      throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
-    // Si la cuenta tiene una baja lógica activa (activo = false), notificamos el bloqueo
-    if (!usuario.activo) {
-      throw new ConflictException('Esta cuenta esta bloqueada');
-    }
-
-    // Comparamos la contraseña en texto plano contra el hash almacenado usando bcrypt
     const passwordValida = await bcrypt.compare(password, usuario.password);
-    // Si no coinciden los hashes, rechazamos la autenticación
     if (!passwordValida) {
-      throw new ConflictException('Credenciales inválidas');
+      throw new UnauthorizedException('Usuario o contraseña incorrectos');
     }
 
-    // Sanitizamos los datos del usuario logueado
-    const usuarioSanitizado = this.usuariosService.sanitizarUsuario(usuario);
-    // Emitimos el nuevo token JWT para la sesión
-    const token = this.generarToken(usuarioSanitizado);
+    if (!usuario.activo) {
+      throw new UnauthorizedException(
+        'Tu cuenta está deshabilitada. Contactá a un administrador para recuperarla.',
+      );
+    }
 
-    // Devolvemos el token firmado junto al usuario
-    return { token, usuario: usuarioSanitizado };
+    return this.armarSesion(this.usuariosService.sanitizarUsuario(usuario));
   }
 
   /**
-   * Verifica la validez criptográfica y expiración de una cadena JWT recibida.
+   * Verifica un token.
+   * Qué hace: Comprueba firma y vencimiento.
+   * Cómo lo hace: jwtService.verify(); cualquier error se traduce en 401.
    */
   verificarToken(token: string) {
     try {
-      // Intenta decodificar y validar la firma con la clave secreta
       return this.jwtService.verify(token);
-    } catch (error) {
-      // Si la firma es incorrecta o expiró el plazo de 15 minutos, lanza 401
+    } catch {
       throw new UnauthorizedException('Token inválido o expirado');
     }
   }
 
   /**
-   * Busca un usuario por su identificador asegurando que permanezca activo en el sistema.
+   * Busca el usuario de la sesión garantizando que siga habilitado.
+   * Qué hace: Se usa en autorizar y refrescar.
+   * Cómo lo hace: usuariosService.findOne(); 401 si no existe o está deshabilitado.
    */
-  async buscarPorId(id: string) {
-    // Consultamos al repositorio de usuarios
+  async buscarUsuarioDeSesion(id: string) {
     const usuario = await this.usuariosService.findOne(id);
-    // Si no se encuentra el documento, denegamos el acceso
     if (!usuario) throw new UnauthorizedException('Usuario no encontrado');
-    // Si el usuario fue dado de baja recientemente, rechazamos la autorización
-    if (!(usuario as any).activo) throw new UnauthorizedException('Cuenta desactivada');
-
-    // Devolvemos el usuario activo
-    return usuario;
+    if (!usuario.activo) throw new UnauthorizedException('Tu cuenta fue deshabilitada');
+    return this.usuariosService.sanitizarUsuario(usuario);
   }
 
   /**
-   * Renueva la sesión emitiendo un nuevo token por otros 15 minutos.
+   * Autorizar (Sprint 3).
+   * Qué hace: Valida el token y devuelve los datos del usuario y cuándo vence la sesión.
+   * Cómo lo hace: verificarToken() + buscarUsuarioDeSesion(). No emite un token nuevo.
    */
-  async refrescar(tokenViejo: string) {
-    try {
-      // Verificamos que el token recibido siga siendo válido
-      const payload = this.verificarToken(tokenViejo);
-      // Validamos que la cuenta continúe existiendo y habilitada
-      const usuario = await this.buscarPorId(payload.id);
-      // Emitimos un nuevo token con otros 15 minutos de vigencia
-      return this.generarToken(usuario);
-    } catch (error) {
-      // Si el token es inválido o no existe la cuenta, denegamos la renovación
-      throw new UnauthorizedException('Sesión desconocida o expirada');
-    }
+  async autorizar(token: string) {
+    const payload = this.verificarToken(token);
+    const usuario = await this.buscarUsuarioDeSesion(payload.id);
+    return { usuario, expiraEn: payload.exp * 1000 };
+  }
+
+  /**
+   * Refrescar (Sprint 3).
+   * Qué hace: Emite un token nuevo con la misma payload y 15 minutos de vigencia.
+   * Cómo lo hace: Valida el token actual (debe seguir vigente) y vuelve a firmar con datos actualizados.
+   */
+  async refrescar(tokenViejo: string): Promise<SesionRespuesta> {
+    const payload = this.verificarToken(tokenViejo);
+    const usuario = await this.buscarUsuarioDeSesion(payload.id);
+    return this.armarSesion(usuario);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { Injectable, UnauthorizedException } from '@nestjs/common';
+// import { JwtService } from '@nestjs/jwt';
+// import * as bcrypt from 'bcryptjs';
+// import { UsuariosService } from '../usuarios/usuarios.service.js';
+// import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto.js';
+// import { LoginDto } from './dto/login.dto.js';
+// import { firmarToken, vencimientoToken } from './token.util.js';
+
+// /** Respuesta común de registro, login, autorizar y refrescar. */
+// export interface SesionRespuesta {
+//   token: string;
+//   expiraEn: number;
+//   usuario: any;
+// }
+
+// @Injectable()
+// export class AuthService {
+//   constructor(
+//     private readonly usuariosService: UsuariosService,
+//     private readonly jwtService: JwtService,
+//   ) {}
+
+//   /**
+//    * Arma la sesión de un usuario.
+//    * Qué hace: Firma el token y calcula su vencimiento.
+//    * Cómo lo hace: Usa las utilidades compartidas firmarToken() y vencimientoToken().
+//    */
+//   private armarSesion(usuario: any): SesionRespuesta {
+//     const token = firmarToken(this.jwtService, usuario);
+//     return { token, expiraEn: vencimientoToken(this.jwtService, token), usuario };
+//   }
+
+//   /**
+//    * Registro (Sprint 1 y 3).
+//    * Qué hace: Crea el usuario (valida unicidad, encripta contraseña, sube foto) y abre sesión.
+//    * Cómo lo hace: Delegación en usuariosService.crearUsuario() y firma del JWT.
+//    */
+//   async registro(dto: CreateUsuarioDto, file?: Express.Multer.File): Promise<SesionRespuesta> {
+//     const usuario = await this.usuariosService.crearUsuario(dto, file);
+//     return this.armarSesion(usuario);
+//   }
+
+//   /**
+//    * Login (Sprint 1 y 3).
+//    * Qué hace: Valida credenciales y que la cuenta esté habilitada.
+//    * Cómo lo hace: Busca por correo o nombre de usuario, compara con bcrypt.compare() y firma el JWT.
+//    * Devuelve 401 tanto por credenciales inválidas como por cuenta deshabilitada.
+//    */
+//   async login(loginDto: LoginDto): Promise<SesionRespuesta> {
+//     const { credencial, password } = loginDto;
+//     const usuario = await this.usuariosService.findByCorreoONombreUsuario(credencial.trim());
+
+//     if (!usuario) {
+//       throw new UnauthorizedException('Usuario o contraseña incorrectos');
+//     }
+
+//     const passwordValida = await bcrypt.compare(password, usuario.password);
+//     if (!passwordValida) {
+//       throw new UnauthorizedException('Usuario o contraseña incorrectos');
+//     }
+
+//     if (!usuario.activo) {
+//       throw new UnauthorizedException(
+//         'Tu cuenta está deshabilitada. Contactá a un administrador para recuperarla.',
+//       );
+//     }
+
+//     return this.armarSesion(this.usuariosService.sanitizarUsuario(usuario));
+//   }
+
+//   /**
+//    * Verifica un token.
+//    * Qué hace: Comprueba firma y vencimiento.
+//    * Cómo lo hace: jwtService.verify(); cualquier error se traduce en 401.
+//    */
+//   verificarToken(token: string) {
+//     try {
+//       return this.jwtService.verify(token);
+//     } catch {
+//       throw new UnauthorizedException('Token inválido o expirado');
+//     }
+//   }
+
+//   /**
+//    * Busca el usuario de la sesión garantizando que siga habilitado.
+//    * Qué hace: Se usa en autorizar y refrescar.
+//    * Cómo lo hace: usuariosService.findOne(); 401 si no existe o está deshabilitado.
+//    */
+//   async buscarUsuarioDeSesion(id: string) {
+//     const usuario = await this.usuariosService.findOne(id);
+//     if (!usuario) throw new UnauthorizedException('Usuario no encontrado');
+//     if (!usuario.activo) throw new UnauthorizedException('Tu cuenta fue deshabilitada');
+//     return this.usuariosService.sanitizarUsuario(usuario);
+//   }
+
+//   /**
+//    * Autorizar (Sprint 3).
+//    * Qué hace: Valida el token y devuelve los datos del usuario y cuándo vence la sesión.
+//    * Cómo lo hace: verificarToken() + buscarUsuarioDeSesion(). No emite un token nuevo.
+//    */
+//   async autorizar(token: string) {
+//     const payload = this.verificarToken(token);
+//     const usuario = await this.buscarUsuarioDeSesion(payload.id);
+//     return { usuario, expiraEn: payload.exp * 1000 };
+//   }
+
+//   /**
+//    * Refrescar (Sprint 3).
+//    * Qué hace: Emite un token nuevo con la misma payload y 15 minutos de vigencia.
+//    * Cómo lo hace: Valida el token actual (debe seguir vigente) y vuelve a firmar con datos actualizados.
+//    */
+//   async refrescar(tokenViejo: string): Promise<SesionRespuesta> {
+//     const payload = this.verificarToken(tokenViejo);
+//     const usuario = await this.buscarUsuarioDeSesion(payload.id);
+//     return this.armarSesion(usuario);
+//   }
+// }
+

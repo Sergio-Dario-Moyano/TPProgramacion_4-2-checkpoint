@@ -1,29 +1,30 @@
-// Importamos el decorador Module y forwardRef para resolver dependencias circulares con comentarios
-import { Module, forwardRef } from '@nestjs/common';
-// Importamos MongooseModule para registrar el esquema de Publicacion
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Publicacion, PublicacionSchema } from './schemas/publicacion.schema.js';
-// Importamos servicios, controladores y repositorios
+import { Comentario, ComentarioSchema } from '../comentarios/schemas/comentario.schema.js';
+import { Usuario, UsuarioSchema } from '../usuarios/schemas/usuario.schema.js';
 import { PublicacionesService } from './publicaciones.service.js';
 import { PublicacionesController } from './publicaciones.controller.js';
-import { PublicacionesRepository } from './publicaciones.repository.js';
 import { EstadisticasController } from './estadisticas.controller.js';
-// Importamos módulos relacionados
+import { PublicacionesRepository } from './publicaciones.repository.js';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module.js';
 import { UsuariosModule } from '../usuarios/usuarios.module.js';
-import { ComentariosModule } from '../comentarios/comentarios.module.js';
 
 /**
- * Módulo de publicaciones y estadísticas analíticas.
+ * Módulo de Publicaciones.
+ * Qué hace: Publicaciones, me gusta y estadísticas (Sprint 4).
+ * Cómo lo hace: Registra también el modelo Comentario para dar de baja los comentarios junto con
+ * la publicación y para las estadísticas, sin generar dependencia circular con ComentariosModule.
  */
 @Module({
   imports: [
-    // Registramos la colección de publicaciones con su esquema en Mongoose
-    MongooseModule.forFeature([{ name: Publicacion.name, schema: PublicacionSchema }]),
+    MongooseModule.forFeature([
+      { name: Publicacion.name, schema: PublicacionSchema },
+      { name: Comentario.name, schema: ComentarioSchema },
+      { name: Usuario.name, schema: UsuarioSchema },
+    ]),
     CloudinaryModule,
     UsuariosModule,
-    // Vinculamos ComentariosModule de forma diferida (forwardRef) para resolver el ciclo bidireccional
-    forwardRef(() => ComentariosModule),
   ],
   controllers: [PublicacionesController, EstadisticasController],
   providers: [PublicacionesService, PublicacionesRepository],

@@ -1,74 +1,69 @@
-// Importamos el tipo Routes de Angular
 import { Routes } from '@angular/router';
-// Importamos los guards de protección perimetral
-import { authGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
-import { adminGuard } from './core/guards/admin.guard';
 
-/**
- * Tabla de rutas standalone de UTN-BUGS.
- */
 export const routes: Routes = [
-  // Ruta inicial: pantalla de verificación silenciosa de sesión
+  // Al abrir la app siempre se pasa por la pantalla "cargando" (Sprint 3)
+  { path: '', pathMatch: 'full', redirectTo: 'cargando' },
   {
-    path: '',
-    loadComponent: () =>
-      import('./pages/pantalla-cargando/pantalla-cargando').then((m) => m.PantallaCargando)
+    path: 'cargando',
+    title: 'Cargando · Checkpoint',
+    loadComponent: () => import('./pages/pantalla-cargando/pantalla-cargando').then((m) => m.PantallaCargando)
   },
 
-  // Ruta pública: Login (protegida con guestGuard para no reingresar si ya está logueado)
+  // Rutas públicas
   {
     path: 'login',
+    title: 'Ingresar · Checkpoint',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/login/login').then((m) => m.Login)
   },
-
-  // Ruta pública: Registro (protegida con guestGuard)
   {
     path: 'registro',
+    title: 'Crear cuenta · Checkpoint',
     canActivate: [guestGuard],
     loadComponent: () => import('./pages/registro/registro').then((m) => m.Registro)
   },
 
-  // Ruta privada: Feed de publicaciones
+  // Rutas privadas
   {
     path: 'publicaciones',
+    title: 'Publicaciones · Checkpoint',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/publicaciones/publicaciones').then((m) => m.Publicaciones)
   },
-
-  // Ruta privada: Detalle de publicación con hilo de comentarios
   {
     path: 'publicaciones/:id',
+    title: 'Publicación · Checkpoint',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./pages/publicacion-detalle/publicacion-detalle').then((m) => m.PublicacionDetalle)
+    loadComponent: () => import('./pages/publicacion-detalle/publicacion-detalle').then((m) => m.PublicacionDetalle)
   },
-
-  // Ruta privada: Mi Perfil (datos personales y últimas 3 publicaciones)
   {
     path: 'mi-perfil',
+    title: 'Mi perfil · Checkpoint',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/mi-perfil/mi-perfil').then((m) => m.MiPerfil)
   },
 
-  // Rutas de administración (protegidas con authGuard y adminGuard)
+  // Dashboard (Sprint 4): solo administradores
   {
-    path: 'dashboard/usuarios',
-    canActivate: [authGuard, adminGuard],
-    loadComponent: () =>
-      import('./pages/dashboard-usuarios/dashboard-usuarios').then((m) => m.DashboardUsuarios)
-  },
-  {
-    path: 'dashboard/estadisticas',
-    canActivate: [authGuard, adminGuard],
-    loadComponent: () =>
-      import('./pages/dashboard-estadisticas/dashboard-estadisticas').then((m) => m.DashboardEstadisticas)
+    path: 'dashboard',
+    canActivate: [adminGuard],
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'usuarios' },
+      {
+        path: 'usuarios',
+        title: 'Usuarios · Dashboard',
+        loadComponent: () => import('./pages/dashboard/usuarios/dashboard-usuarios').then((m) => m.DashboardUsuarios)
+      },
+      {
+        path: 'estadisticas',
+        title: 'Estadísticas · Dashboard',
+        loadComponent: () =>
+          import('./pages/dashboard/estadisticas/dashboard-estadisticas').then((m) => m.DashboardEstadisticas)
+      }
+    ]
   },
 
-  // Comodín de rutas no encontradas: redirige a la raíz
-  {
-    path: '**',
-    redirectTo: ''
-  }
+  { path: '**', redirectTo: 'cargando' }
 ];

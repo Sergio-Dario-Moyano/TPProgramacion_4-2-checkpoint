@@ -1,39 +1,46 @@
 /* ========================================================
-   VARIABLES CSS3 NATIVAS - SISTEMA DE DISEÑO UTN-BUGS
+   VARIABLES CSS3 - SISTEMA DE DISEÑO CHECKPOINT (red social gamer)
    ======================================================== */
 
 :root {
-  /* Fondos del sistema en escala de profundidad */
-  --bg-app: #0b0d10;              /* Fondo de pantalla general */
-  --bg-surface: #12151b;          /* Contenedores secundarios */
-  --bg-surface-card: #151922;     /* Tarjetas de posts, modales y login */
-  --bg-surface-elevated: #1a1f2c; /* Hover y menús desplegables */
-  --bg-input: #0e1117;             /* Fondo oscuro para inputs y textareas */
-  --bg-input-focus: #141822;       /* Fondo de inputs al hacer foco */
+  /* Fondos en escala de profundidad */
+  --bg-app: #0a0a12;
+  --bg-surface: #11111c;
+  --bg-surface-card: #151524;
+  --bg-surface-elevated: #1c1c30;
+  --bg-input: #0d0d18;
+  --bg-input-focus: #141426;
 
-  /* Bordes de división */
-  --border-subtle: #1e2430;        /* Líneas tenues separadoras */
-  --border-card: #242b3b;          /* Bordes de tarjetas y modales */
-  --border-hover: #323c52;         /* Bordes resaltados */
+  /* Bordes */
+  --border-subtle: #1f1f33;
+  --border-card: #2a2a45;
+  --border-hover: #3b3b60;
 
-  /* Identidad de marca y acentos */
-  --color-primary: #ff0d46;        /* Rojo carmesí neón principal */
-  --color-primary-hover: #e00639;  /* Rojo activo para botones */
-  --color-primary-glow: rgba(255, 13, 70, 0.25); /* Sombra luminosa */
+  /* Identidad: violeta neón + cian + lima */
+  --color-primary: #a259ff;
+  --color-primary-hover: #8c3dff;
+  --color-primary-glow: rgba(162, 89, 255, 0.28);
 
-  --color-cyan: #00e5ff;           /* Cyan neón para tags y gráficos */
+  --color-cyan: #00e5ff;
   --color-cyan-glow: rgba(0, 229, 255, 0.2);
 
-  /* Estados */
-  --color-success: #00e676;        /* Verde para usuario activo */
-  --color-success-bg: rgba(0, 230, 118, 0.12);
-  --color-danger: #ff0d46;         /* Rojo de error y deshabilitado */
-  --color-danger-bg: rgba(255, 13, 70, 0.12);
+  --color-lime: #b6ff3b;
+  --color-lime-glow: rgba(182, 255, 59, 0.18);
 
-  /* Tipografías y textos */
-  --text-main: #f0f3f8;            /* Texto blanco de alta lectura */
-  --text-secondary: #9aa5b8;       /* Texto gris intermedio */
-  --text-muted: #606d84;           /* Texto atenuado para leyendas */
+  /* Estados */
+  --color-success: #2bff88;
+  --color-success-bg: rgba(43, 255, 136, 0.12);
+  --color-danger: #ff3d5a;
+  --color-danger-bg: rgba(255, 61, 90, 0.12);
+  --color-warning: #ffc53d;
+
+  /* Textos */
+  --text-main: #f2f0ff;
+  --text-secondary: #a6a3c4;
+  --text-muted: #6c6a8e;
+
+  /* Tipografías */
+  --font-display: 'Rajdhani', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
@@ -43,6 +50,5 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  /* Ancho de contenedor */
   --max-width-content: 1200px;
 }

@@ -1,5 +1,5 @@
 /* ========================================================
-   ESTILOS CSS3 PURO - TARJETA DE PUBLICACIÓN UTN-BUGS
+   ESTILOS CSS3 PURO - TARJETA DE PUBLICACIÓN CHECKPOINT
    ======================================================== */
 
 .post-card {
@@ -17,7 +17,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-/* Cabecera del post */
 .post-header {
   display: flex;
   align-items: center;
@@ -64,7 +63,6 @@
   color: var(--text-muted);
 }
 
-/* Menú de moderación de tres puntos */
 .btn-post-menu {
   background: transparent;
   border: none;
@@ -80,15 +78,14 @@
 
 .btn-post-menu:hover {
   color: var(--color-primary);
-  background-color: rgba(255, 13, 70, 0.1);
+  background-color: rgba(162, 89, 255, 0.1);
 }
 
 .icon-menu {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
-/* Tag de categoría */
 .post-category-tag {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -97,7 +94,6 @@
   letter-spacing: 0.04em;
 }
 
-/* Título */
 .post-title {
   font-size: 1.35rem;
   font-weight: 700;
@@ -116,7 +112,6 @@
   color: var(--color-cyan);
 }
 
-/* Cuerpo del apunte */
 .post-description {
   font-size: 0.95rem;
   line-height: 1.6;
@@ -125,7 +120,6 @@
   word-break: break-word;
 }
 
-/* Imagen adjunta */
 .post-media-container {
   width: 100%;
   max-height: 480px;
@@ -143,7 +137,6 @@
   display: block;
 }
 
-/* Pie de interacciones */
 .post-footer {
   display: flex;
   align-items: center;
@@ -195,7 +188,6 @@
   color: var(--color-primary);
 }
 
-/* Enlace ver detalles */
 .link-details {
   display: flex;
   align-items: center;
@@ -214,4 +206,42 @@
 
 .link-arrow {
   font-size: 1rem;
+}
+/* ---- Agregados ---- */
+.post-actions-menu {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.btn-danger-icon:hover {
+  color: var(--color-danger) !important;
+  border-color: rgba(255, 61, 90, 0.4) !important;
+}
+
+.btn-post-menu.is-moderation {
+  width: auto !important;
+  padding: 0 0.55rem;
+  gap: 0.3rem;
+  color: var(--color-lime);
+}
+
+.mod-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+}
+
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.post-media-container {
+  display: block;
+}
+
+.post-description {
+  white-space: pre-line;
 }
