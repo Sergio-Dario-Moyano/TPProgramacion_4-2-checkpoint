@@ -22,7 +22,6 @@ export const adminGuard: CanActivateFn = () => {
 
   // Comprobamos si el usuario existe y si su atributo perfil es exactamente 'administrador'
   if (user && user.perfil === 'administrador') {
-    // Concedemos el acceso al panel administrativo
     return true;
   }
 
