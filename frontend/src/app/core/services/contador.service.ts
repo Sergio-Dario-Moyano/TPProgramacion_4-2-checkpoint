@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ModalService } from '../../shared/components/modal/modal.service';
 import { environment } from '../../../environments/environment';
@@ -7,7 +6,9 @@ import { environment } from '../../../environments/environment';
 /**
  * Contador de sesión (Sprint 3).
  * Qué hace: Con una sesión de 15 minutos, a los 10 minutos muestra un modal avisando que quedan 5
- * y pregunta si se quiere extender. Si acepta, refresca el token; si no responde, al vencer cierra la sesión.
+ * y pregunta si se quiere extender. Si acepta, refresca el token. Si no responde, al vencer NO lo
+ * saca de la pantalla: marca la sesión como vencida y el 401 llega recién cuando el usuario
+ * hace algo que consulta al backend (el interceptor avisa y lo manda al login).
  * Cómo lo hace: Programa los timers a partir del vencimiento real del token (expiraEn), así funciona
  * igual al iniciar sesión, al refrescar o al volver a entrar con una sesión ya abierta.
  */
@@ -15,7 +16,6 @@ import { environment } from '../../../environments/environment';
 export class ContadorService {
   private authService = inject(AuthService);
   private modalService = inject(ModalService);
-  private router = inject(Router);
 
   private timeoutAviso: ReturnType<typeof setTimeout> | null = null;
   private timeoutFin: ReturnType<typeof setTimeout> | null = null;
@@ -75,24 +75,18 @@ export class ContadorService {
     }
   }
 
-  /** Se cumplió el vencimiento del token sin extender la sesión. */
+  /**
+   * Se cumplió el vencimiento del token sin extender la sesión.
+   * Qué hace: Deja al usuario en la pantalla donde está, con la sesión marcada como vencida.
+   * Cómo lo hace: Cierra el modal de aviso si seguía abierto y pone authService.sesionVencida en
+   * true (eso pausa la actualización en vivo). No borra la sesión ni navega: la próxima acción del
+   * usuario va al backend con el token vencido, recibe 401 y el interceptor lo manda al login.
+   */
   private expirarSesion(): void {
     if (this.sesionTerminada) return;
     this.sesionTerminada = true;
-
     if (this.modalAbierto) this.modalService.close(false);
-    this.authService.limpiarSesion();
-
-    this.router.navigate(['/login']).then(() => {
-      this.modalService.alerta({
-        categoria: 'SESIÓN / GAME OVER',
-        titulo: 'Tu sesión terminó',
-        mensaje: 'Pasaron los 15 minutos sin extender la sesión. Ingresá de nuevo para seguir.',
-        textoConfirmar: 'Volver a ingresar',
-        tipoIcono: 'timer',
-        esPeligro: false
-      });
-    });
+    this.authService.sesionVencida.set(true);
   }
 
   limpiarTimers(): void {

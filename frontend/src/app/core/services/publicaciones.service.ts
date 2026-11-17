@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { SKIP_INTERCEPTOR } from '../interceptors/http-context-tokens';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -11,6 +12,14 @@ import {
 interface IRespuestaPublicacion {
   message: string;
   publicacion: IPublicacion;
+}
+
+/**
+ * Contexto de un pedido "silencioso": el interceptor no muestra el aviso de 401/403.
+ * Lo usa la actualización en vivo (sondeo), que no es una acción del usuario.
+ */
+export function contextoSilencioso(silencioso: boolean): HttpContext {
+  return new HttpContext().set(SKIP_INTERCEPTOR, silencioso);
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,7 +41,8 @@ export class PublicacionesService {
     limit = 5,
     orden: 'fecha' | 'meGustas' = 'fecha',
     usuarioId?: string,
-    categoria?: CategoriaPublicacion | null
+    categoria?: CategoriaPublicacion | null,
+    silencioso = false
   ): Observable<IRespuestaPublicaciones> {
     let params = new HttpParams()
       .set('offset', offset)
@@ -42,12 +52,16 @@ export class PublicacionesService {
     if (usuarioId) params = params.set('usuarioId', usuarioId);
     if (categoria) params = params.set('categoria', categoria);
 
-    return this.http.get<IRespuestaPublicaciones>(this.API_URL, { params });
+    return this.http.get<IRespuestaPublicaciones>(this.API_URL, { params, context: contextoSilencioso(silencioso) });
   }
 
-  getById(id: string): Observable<IPublicacion> {
+  /**
+   * `silencioso = true` lo usa la actualización en vivo: si falla (por ejemplo un 401 con el token
+   * vencido) no dispara el aviso global; ese aviso queda para las acciones del usuario.
+   */
+  getById(id: string, silencioso = false): Observable<IPublicacion> {
     return this.http
-      .get<{ publicacion: IPublicacion }>(`${this.API_URL}/${id}`)
+      .get<{ publicacion: IPublicacion }>(`${this.API_URL}/${id}`, { context: contextoSilencioso(silencioso) })
       .pipe(map((response) => response.publicacion));
   }
 

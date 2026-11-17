@@ -216,12 +216,14 @@ export class PublicacionDetalle implements OnInit {
    * recientes, y los combina con lo que ya está en pantalla sin perder la paginación.
    */
   private actualizarEnVivo(id: string): void {
+    // Con el token vencido no se actualiza: el 401 tiene que llegar por una acción del usuario.
+    if (this.auth.sesionVencida()) return;
     if (this.actualizando || this.loadingPost() || this.loadingComentarios()) return;
     this.actualizando = true;
 
     forkJoin({
-      post: this.publicacionesService.getById(id),
-      comentarios: this.comentariosService.listar(id, VENTANA_COMENTARIOS, 0)
+      post: this.publicacionesService.getById(id, true),
+      comentarios: this.comentariosService.listar(id, VENTANA_COMENTARIOS, 0, true)
     }).subscribe({
       next: ({ post, comentarios }) => {
         this.actualizando = false;
@@ -230,6 +232,8 @@ export class PublicacionDetalle implements OnInit {
       },
       error: (err: HttpErrorResponse) => {
         this.actualizando = false;
+        // El token venció justo ahora: se pausa el sondeo sin sacar al usuario de la pantalla.
+        if (err.status === 401) this.auth.sesionVencida.set(true);
         if (err.status === 404) this.publicacionDadaDeBaja();
       }
     });
@@ -485,4 +489,5 @@ export class PublicacionDetalle implements OnInit {
     return this.esAutorComentario(comentario) || this.usuarioActual()?.perfil === 'administrador';
   }
 }
+
 

@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { isValidObjectId } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { UsuariosService } from '../usuarios/usuarios.service.js';
 import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto.js';
@@ -90,6 +91,9 @@ export class AuthService {
    * Cómo lo hace: usuariosService.findOne(); 401 si no existe o está deshabilitado.
    */
   async buscarUsuarioDeSesion(id: string) {
+    // Un token sin id válido no puede identificar a nadie: es un error del token (401),
+    // no un error del servidor (si llegara a findById daría 500 por CastError).
+    if (!id || !isValidObjectId(id)) throw new UnauthorizedException('Token inválido');
     const usuario = await this.usuariosService.findOne(id);
     if (!usuario) throw new UnauthorizedException('Usuario no encontrado');
     if (!usuario.activo) throw new UnauthorizedException('Tu cuenta fue deshabilitada');

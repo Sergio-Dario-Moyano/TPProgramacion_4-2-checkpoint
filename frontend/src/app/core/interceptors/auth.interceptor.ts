@@ -42,6 +42,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && !manejando401) {
         manejando401 = true;
+        const tokenVencido = auth.sesionVencida();
         auth.limpiarSesion();
 
         router.navigate(['/login']).then(() => {
@@ -49,9 +50,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             .alerta({
               categoria: 'ERROR 401 / NO AUTORIZADO',
               titulo: 'Necesitás volver a ingresar',
-              mensaje:
-                error.error?.message ??
-                'Tu sesión venció o no es válida. Iniciá sesión de nuevo para continuar.',
+              mensaje: tokenVencido
+                ? 'Tu sesión venció. Iniciá sesión de nuevo para continuar.'
+                : error.error?.message ?? 'Tu sesión venció o no es válida. Iniciá sesión de nuevo para continuar.',
               textoConfirmar: 'Ir al login',
               tipoIcono: 'alert',
               esPeligro: true

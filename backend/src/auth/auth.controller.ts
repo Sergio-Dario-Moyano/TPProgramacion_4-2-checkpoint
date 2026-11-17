@@ -16,6 +16,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service.js';
 import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { AutorizarDto } from './dto/autorizar.dto.js';
 import { multerConfig } from '../cloudinary/multer.config.js';
 import { borrarCookieSesion, extraerToken, setearCookieSesion } from './sesion.util.js';
 
@@ -66,14 +67,17 @@ export class AuthController {
 
   /**
    * POST /auth/autorizar (Sprint 3) → 200 | 401
-   * Qué hace: Valida que el token sea válido y no esté vencido; devuelve los datos del usuario.
-   * Cómo lo hace: Lee el token del header Bearer o de la cookie.
+   * Qué hace: Valida que el token sea válido y no esté vencido. Si es válido devuelve los datos
+   * del usuario; ante cualquier problema con el token responde 401.
+   * Cómo lo hace: Toma el token del body ({ token }), del header Authorization (Bearer) o de la
+   * cookie, en ese orden. Casos de 401: no llegó token, firma inválida, token vencido, o el
+   * usuario del token no existe o está deshabilitado.
    */
   @Post('autorizar')
   @HttpCode(HttpStatus.OK)
-  async autorizar(@Req() request: Request) {
-    const token = extraerToken(request);
-    if (!token) throw new UnauthorizedException('No hay una sesión activa');
+  async autorizar(@Body() body: AutorizarDto, @Req() request: Request) {
+    const token = body?.token?.trim() || extraerToken(request);
+    if (!token) throw new UnauthorizedException('No se envió ningún token');
 
     const resultado = await this.authService.autorizar(token);
     return { message: 'Token válido', ...resultado };
@@ -106,6 +110,7 @@ export class AuthController {
     return { message: 'Sesión cerrada correctamente' };
   }
 }
+
 
 
 

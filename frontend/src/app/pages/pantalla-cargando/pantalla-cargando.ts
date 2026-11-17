@@ -19,9 +19,11 @@ const TIPS = [
 /**
  * Pantalla "cargando" (Sprint 3).
  * Qué hace: Se muestra siempre al abrir la app. Mientras tanto valida el token contra
- * POST /auth/autorizar. Si es válido va a publicaciones (o a la página que se pidió);
- * si no (401), va al login.
- * Si el servidor no responde (Render en plan gratuito tarda en "despertar"), ofrece reintentar.
+ * POST /auth/autorizar (siempre: es el backend quien decide si la sesión es válida).
+ *  - 200 → la sesión es válida: va a publicaciones (o a la página que se pidió).
+ *  - 401 → hubo un problema con el token (no hay, es inválido o venció): limpia la sesión y va al login.
+ *  - Cualquier otro error (sin conexión, 5xx, etc.) NO es un problema del token: no cierra la
+ *    sesión y ofrece reintentar (Render en plan gratuito tarda en "despertar").
  */
 @Component({
   selector: 'app-pantalla-cargando',
@@ -70,15 +72,8 @@ export class PantallaCargando implements OnInit, OnDestroy {
       this.timers.push(setTimeout(accion, restante));
     };
 
-    // Sin token guardado no hay sesión que validar: se evita una petición que daría 401
-    if (!this.auth.token) {
-      despuesDelMinimo(() => {
-        this.auth.limpiarSesion();
-        this.router.navigate([destino.startsWith('/registro') ? '/registro' : '/login'], { replaceUrl: true });
-      });
-      return;
-    }
-
+    // Siempre se consulta al backend. Si no hay token guardado, el pedido viaja igual
+    // (puede existir la cookie de sesión) y, si no hay ninguno, el backend responde 401.
     this.auth.autorizarSesion().subscribe({
       next: (res) => {
         despuesDelMinimo(() => {
@@ -89,16 +84,22 @@ export class PantallaCargando implements OnInit, OnDestroy {
       },
       error: (err: HttpErrorResponse) => {
         despuesDelMinimo(() => {
-          // status 0 = no hubo respuesta del servidor (caído, sin internet, CORS)
-          if (err.status === 0) {
-            this.sinConexion.set(true);
-            this.mensaje.set('No pudimos conectar con el servidor.');
+          // 401: token inexistente, inválido o vencido → se cierra la sesión y va al login
+          if (err.status === 401) {
+            this.auth.limpiarSesion();
+            const irARegistro = destino.startsWith('/registro');
+            this.router.navigate([irARegistro ? '/registro' : '/login'], { replaceUrl: true });
             return;
           }
-          // 401: token inexistente, inválido o vencido → login (o registro si lo pidió)
-          this.auth.limpiarSesion();
-          const irARegistro = destino.startsWith('/registro');
-          this.router.navigate([irARegistro ? '/registro' : '/login'], { replaceUrl: true });
+
+          // Otro error: el token no tiene la culpa, así que la sesión NO se borra.
+          // status 0 = no hubo respuesta (servidor caído o dormido, sin internet, CORS).
+          this.sinConexion.set(true);
+          this.mensaje.set(
+            err.status === 0
+              ? 'No pudimos conectar con el servidor.'
+              : `El servidor respondió con un error (${err.status}). Probá de nuevo en unos segundos.`
+          );
         });
       }
     });

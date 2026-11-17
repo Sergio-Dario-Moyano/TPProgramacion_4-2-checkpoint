@@ -32,6 +32,14 @@ export class AuthService {
    */
   sesionVerificada = signal<boolean>(false);
 
+  /**
+   * true cuando el token ya venció pero el usuario sigue viendo la pantalla.
+   * No se lo saca automáticamente: recién cuando haga algo que consulte al backend
+   * (ver otra publicación, dar me gusta, comentar...) el backend responde 401 y el
+   * interceptor avisa y lo manda al login. Mientras tanto se pausa la actualización en vivo.
+   */
+  sesionVencida = signal<boolean>(false);
+
   isAuthenticated = computed(() => this.actualUser() !== null);
   esAdmin = computed(() => this.actualUser()?.perfil === 'administrador');
 
@@ -93,6 +101,7 @@ export class AuthService {
     }
     this.actualUser.set(datos.usuario);
     this.sesionVerificada.set(true);
+    this.sesionVencida.set(false);
     this.contador.iniciarTemporizador(datos.expiraEn);
   }
 
@@ -110,6 +119,7 @@ export class AuthService {
     }
     this.actualUser.set(null);
     this.sesionVerificada.set(true);
+    this.sesionVencida.set(false);
     this.contador.limpiarTimers();
   }
 

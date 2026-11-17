@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { contextoSilencioso } from './publicaciones.service';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { IRespuestaComentarios } from '../models/comentario.interface';
@@ -16,12 +17,15 @@ export class ComentariosService {
    * Qué hace: Trae los comentarios ordenados con los más recientes primero.
    * Cómo lo hace: Realiza una petición GET a /comentarios/publicacion/:id enviando limit y offset.
    */
-  listar(publicacionId: string, limit: number = 5, offset: number = 0): Observable<IRespuestaComentarios> {
+  listar(publicacionId: string, limit: number = 5, offset: number = 0, silencioso = false): Observable<IRespuestaComentarios> {
     const params = new HttpParams()
       .set('limit', limit.toString())
       .set('offset', offset.toString());
 
-    return this.http.get<IRespuestaComentarios>(`${this.API_URL}/publicacion/${publicacionId}`, { params });
+    return this.http.get<IRespuestaComentarios>(`${this.API_URL}/publicacion/${publicacionId}`, {
+      params,
+      context: contextoSilencioso(silencioso)
+    });
   }
 
   /**
@@ -51,6 +55,7 @@ export class ComentariosService {
     return this.http.delete(`${this.API_URL}/${comentarioId}`);
   }
 }
+
 
 
 

@@ -154,18 +154,24 @@ export class Publicaciones implements OnInit {
    * muestra un aviso en lugar de mover la lista mientras el usuario lee.
    */
   private actualizarEnVivo(): void {
+    // Con el token vencido no se actualiza: el 401 tiene que llegar por una acción del usuario.
+    if (this.auth.sesionVencida()) return;
     if (this.actualizando || this.loadingInicial() || this.loadingMas() || this.errorCarga()) return;
     const cantidad = Math.min(Math.max(this.publicaciones().length, this.limit), 10);
     this.actualizando = true;
 
     this.publicacionesService
-      .listar(0, cantidad, this.ordenActivo(), undefined, this.categoriaActiva())
+      .listar(0, cantidad, this.ordenActivo(), undefined, this.categoriaActiva(), true)
       .subscribe({
         next: (res) => {
           this.actualizando = false;
           this.fusionarPublicaciones(res.publicaciones || [], res.total ?? 0, cantidad);
         },
-        error: () => (this.actualizando = false)
+        error: (err: HttpErrorResponse) => {
+          this.actualizando = false;
+          // El token venció justo ahora: se pausa el sondeo sin sacar al usuario de la pantalla.
+          if (err.status === 401) this.auth.sesionVencida.set(true);
+        }
       });
   }
 
