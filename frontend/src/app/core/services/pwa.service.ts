@@ -13,9 +13,10 @@ interface BeforeInstallPromptEvent extends Event {
  * Instalación de la PWA.
  * Qué hace: Permite mostrar un botón propio "Instalar app" en lugar de depender del ícono
  * de la barra de direcciones del navegador.
- * Cómo lo hace: Escucha el evento 'beforeinstallprompt', lo guarda y pone el signal `disponible`
- * en true. Al llamar a instalar() abre el cuadro oficial del navegador. Cuando la app se instala
- * (evento 'appinstalled') el botón desaparece.
+ * Cómo lo hace: main.ts captura el evento 'beforeinstallprompt' apenas carga la página y lo guarda
+ * en window.eventoInstalarPwa (avisando con el evento 'pwa-instalable'). Este servicio lo toma de
+ * ahí, pone el signal `disponible` en true y, al llamar a instalar(), abre el cuadro oficial del
+ * navegador. Cuando la app se instala (evento 'appinstalled') el botón desaparece.
  * Funciona en Chrome, Edge y Android. Safari (iPhone) y Firefox no disparan este evento.
  */
 @Injectable({ providedIn: 'root' })
@@ -26,16 +27,25 @@ export class InstalarPwaService {
   disponible = signal(false);
 
   constructor() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault(); // evita el aviso automático del navegador; lo mostramos con el botón
-      this.evento = e as BeforeInstallPromptEvent;
-      this.disponible.set(true);
-    });
+    // El evento puede haber llegado antes de que exista este servicio (lo guardó main.ts).
+    this.tomarEvento();
+
+    // O puede llegar después.
+    window.addEventListener('pwa-instalable', () => this.tomarEvento());
 
     window.addEventListener('appinstalled', () => {
       this.evento = null;
+      (window as any).eventoInstalarPwa = null;
       this.disponible.set(false);
     });
+  }
+
+  private tomarEvento(): void {
+    const guardado = (window as any).eventoInstalarPwa as BeforeInstallPromptEvent | null;
+    if (guardado) {
+      this.evento = guardado;
+      this.disponible.set(true);
+    }
   }
 
   /** Abre el cuadro "¿Instalar Checkpoint?" del navegador. */
@@ -45,6 +55,7 @@ export class InstalarPwaService {
     await this.evento.userChoice;
     // El evento solo se puede usar una vez, haya aceptado o no.
     this.evento = null;
+    (window as any).eventoInstalarPwa = null;
     this.disponible.set(false);
   }
 }
