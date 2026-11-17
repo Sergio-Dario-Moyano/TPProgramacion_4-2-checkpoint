@@ -301,3 +301,13 @@
 .brand-link {
   text-decoration: none;
 }
+
+/* PWA: botón "Instalar app" del drawer (es un <button>, se le quitan los estilos por defecto) */
+.btn-instalar-drawer {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}

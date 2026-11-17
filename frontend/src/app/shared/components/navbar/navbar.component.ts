@@ -5,6 +5,7 @@ import { ModalService } from '../modal/modal.service';
 import { LogoComponent } from '../logo/logo.component';
 import { SoloAdminDirective } from '../../directives/solo-admin.directive';
 import { ImagenFallbackDirective } from '../../directives/imagen-fallback.directive';
+import { InstalarPwaService } from '../../../core/services/pwa.service.js';
 
 /**
  * Barra de navegación superior y drawer lateral responsive para la comunidad.
@@ -21,6 +22,8 @@ import { ImagenFallbackDirective } from '../../directives/imagen-fallback.direct
 export class NavbarComponent {
   authService = inject(AuthService);
   modalService = inject(ModalService);
+  /** PWA: controla el botón "Instalar app". */
+  instalarPwa = inject(InstalarPwaService);
   usuario = this.authService.actualUser;
 
   menuAbierto = signal<boolean>(false);
@@ -41,6 +44,16 @@ export class NavbarComponent {
    */
   cerrarMenu(): void {
     this.menuAbierto.set(false);
+  }
+
+  /**
+   * Instala la app como PWA.
+   * Qué hace: Cierra el drawer (si estaba abierto) y abre el cuadro de instalación del navegador.
+   * Cómo lo hace: Delega en InstalarPwaService.instalar().
+   */
+  async instalarApp(): Promise<void> {
+    this.cerrarMenu();
+    await this.instalarPwa.instalar();
   }
 
 

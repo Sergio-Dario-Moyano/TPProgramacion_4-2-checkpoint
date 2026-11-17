@@ -11,21 +11,3 @@ export class AppService {
     return 'Checkpoint API en funcionamiento';
   }
 }
-
-
-
-
-
-
-
-
-
-
-// import { Injectable } from '@nestjs/common';
-
-// @Injectable()
-// export class AppService {
-//   getHello(): string {
-//     return 'Hello World!';
-//   }
-// }
